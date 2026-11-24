@@ -1,9 +1,11 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
+import { CircleCheck, Eye, MailX, Send } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { DayPoint, Summary } from '../../utils/outreachAnalytics';
-import { SegmentedControl } from '../ui/Misc';
+import { Badge, BadgeTone } from '../ui/Badge';
+import { Card, CardHeader, CARD } from '../ui/Card';
 import { InfoTip } from '../ui/InfoTip';
-import { ChartMode, OutreachChart } from './OutreachChart';
+import { OutreachChart, VOLUME_LEGEND } from './OutreachChart';
 
 /** Below this denominator a rate is shown as a fraction ("1 of 1"), not a percentage. */
 export const LOW_SAMPLE = 10;
@@ -16,59 +18,66 @@ export function rateText(num: number, den: number): string {
   return den < LOW_SAMPLE ? `${num} of ${den}` : `${((num / den) * 100).toFixed(1)}%`;
 }
 
-function Stage({
-  label,
-  tip,
-  value,
-  sub,
-  secondary,
-  onClick,
-}: {
-  label: string;
-  tip: ReactNode;
-  value: string;
-  sub?: ReactNode;
-  secondary?: boolean;
-  onClick?: () => void;
-}) {
-  const body = (
-    <>
-      <span className="flex items-center gap-1.5 text-ui text-ink-3">
-        {label}
-        <InfoTip>{tip}</InfoTip>
-      </span>
-      <span
-        className={cn(
-          'mt-1 block font-semibold tabular-nums tracking-[-0.03em]',
-          secondary ? 'text-[24px] leading-9 text-ink-2' : 'text-[32px] leading-9 text-ink'
-        )}
-      >
-        {value}
-      </span>
-      <span className="block min-h-4 text-xs tabular-nums text-ink-3">{sub}</span>
-    </>
-  );
-  return onClick ? (
+/** A clickable badge that sits above the card's full-size hit area. */
+function BadgeButton({ tone, children, onClick }: { tone: BadgeTone; children: ReactNode; onClick: () => void }) {
+  return (
     <button
       type="button"
       onClick={onClick}
-      className="-m-2 block min-w-[112px] rounded-lg p-2 text-left transition-colors hover:bg-subtle/70 focus-visible:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      className="relative z-10 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
-      {body}
+      <Badge tone={tone} className="cursor-pointer hover:brightness-[0.97]">
+        {children}
+      </Badge>
     </button>
-  ) : (
-    <div className="min-w-[112px]">{body}</div>
   );
 }
 
-/** The conversion between two stages, written inline on the connector. */
-function Connector({ num, den }: { num: number; den: number }) {
+function KpiCard({
+  label,
+  icon,
+  tip,
+  value,
+  footer,
+  onClick,
+  tipAlign = 'start',
+}: {
+  label: string;
+  icon: ReactNode;
+  tip: ReactNode;
+  /** Cards in the right-hand column open their tip leftwards so it stays on screen. */
+  tipAlign?: 'start' | 'end';
+  value: string;
+  footer?: ReactNode;
+  onClick?: () => void;
+}) {
   return (
-    <div className="hidden w-16 shrink-0 flex-col items-center pt-8 md:flex" aria-hidden="true">
-      <span className="text-2xs font-medium tabular-nums text-ink-3">
-        {den > 0 ? (den < LOW_SAMPLE ? `${num}/${den}` : `${Math.round((num / den) * 100)}%`) : '—'}
-      </span>
-      <span className="mt-1 h-px w-full bg-line-strong" />
+    <div className={cn(CARD, 'group relative flex min-w-0 flex-col p-5 transition-[border-color,box-shadow]', onClick && 'hover:border-line-strong hover:shadow-float')}>
+      {/* The whole card opens the records; badges and the tip sit above this layer. */}
+      {onClick && (
+        <button
+          type="button"
+          onClick={onClick}
+          aria-label={`${label}: ${value}. View emails`}
+          className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+        />
+      )}
+      <div className="flex items-center justify-between gap-2">
+        <span className="flex items-center gap-1.5 text-ui font-medium text-ink-2">
+          {label}
+          <span className="relative z-10 inline-flex">
+            <InfoTip align={tipAlign}>{tip}</InfoTip>
+          </span>
+        </span>
+        <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-subtle text-ink-3 [&>svg]:size-3.5" aria-hidden="true">
+          {icon}
+        </span>
+      </div>
+      <span className="mt-3 block text-[28px] font-semibold leading-8 tracking-tight tabular-nums text-ink">{value}</span>
+      {/* One badge + one line of context, same height on every card so the row reads level. */}
+      <div className="mt-3 flex h-[22px] min-w-0 items-center gap-2 whitespace-nowrap text-xs leading-none text-ink-3 [&>*:first-child]:shrink-0 [&>span:last-child:not(:first-child)]:truncate">
+        {footer}
+      </div>
     </div>
   );
 }
@@ -81,6 +90,7 @@ export function FunnelHero({
   emptyRangeLabel,
   onCompose,
   onWiderRange,
+  onNarrowRange,
 }: {
   cur: Summary;
   series: DayPoint[];
@@ -91,25 +101,30 @@ export function FunnelHero({
   onCompose: () => void;
   /** Switches to a longer range; omitted when already on the longest preset. */
   onWiderRange?: () => void;
+  /** Switches to 7 days; passed only when every send in range happened in the last week. */
+  onNarrowRange?: () => void;
 }) {
-  const [view, setView] = useState<ChartMode>('volume');
-
-  // Nothing sent: one compact line with the two useful next steps, instead of zeros and an empty chart.
+  // Nothing sent: one card with the two useful next steps, instead of zeros and an empty chart.
   if (cur.attempted === 0) {
     return (
-      <section aria-labelledby="funnel-title" className="flex flex-col items-start gap-4 rounded-xl border border-line bg-surface px-5 py-6 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 id="funnel-title" className="text-heading font-semibold text-ink">
-            No emails sent
-          </h2>
-          <p className="mt-0.5 text-ui text-ink-3">{emptyRangeLabel}</p>
+      <Card aria-labelledby="funnel-title" className="flex flex-col items-start gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-subtle text-ink-3" aria-hidden="true">
+            <Send className="size-4" />
+          </span>
+          <div>
+            <h2 id="funnel-title" className="text-heading font-semibold text-ink">
+              No emails sent yet
+            </h2>
+            <p className="mt-0.5 text-ui text-ink-3">Nothing went out between {emptyRangeLabel}.</p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {onWiderRange && (
             <button
               type="button"
               onClick={onWiderRange}
-              className="inline-flex h-8 items-center rounded-md border border-line-strong bg-surface px-3 text-ui font-medium text-ink-2 hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="inline-flex h-8 items-center rounded-lg border border-line-strong bg-surface px-3 text-ui font-medium text-ink-2 hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Show 90 days
             </button>
@@ -117,122 +132,163 @@ export function FunnelHero({
           <button
             type="button"
             onClick={onCompose}
-            className="inline-flex h-8 items-center rounded-md bg-accent px-3 text-ui font-medium text-white hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+            className="inline-flex h-8 items-center rounded-lg bg-accent px-3 text-ui font-medium text-white shadow-xs hover:bg-accent-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
           >
             Compose email
           </button>
         </div>
-      </section>
+      </Card>
     );
   }
+
   const opensTracked = cur.openEligible > 0;
   const bounced = cur.hardBounces + cur.softBounces;
   const lowSample = (cur.sent > 0 && cur.sent < LOW_SAMPLE) || (opensTracked && cur.openEligible < LOW_SAMPLE);
-  const summary =
-    cur.attempted === 0
-      ? 'No emails were sent in this period.'
-      : `${cur.sent} emails sent, ${cur.delivered} delivered, ${bounced} bounced, ${cur.failed} failed${
-          opensTracked ? `, ${cur.uniqueOpens} of ${cur.openEligible} tracked emails opened` : ''
-        }.`;
+  const activeDays = series.filter((p) => p.attempted > 0).length;
+  const sparse = series.length > 7 && activeDays <= 3;
+  const summary = `${cur.sent} emails sent, ${cur.delivered} delivered, ${bounced} bounced, ${cur.failed} failed${
+    opensTracked ? `, ${cur.uniqueOpens} of ${cur.openEligible} tracked emails opened` : ''
+  }.`;
 
   return (
-    <section aria-labelledby="funnel-title" className="rounded-xl border border-line bg-surface">
+    <section aria-labelledby="funnel-title" className="space-y-4">
       <h2 id="funnel-title" className="sr-only">
-        Outreach funnel
+        Outreach overview
       </h2>
-      {/* Funnel ribbon: the only large numbers on the page, grouped so the path reads left to right. */}
-      <div className="flex flex-wrap items-start gap-x-2 gap-y-5 border-b border-line px-5 pb-4 pt-5">
-        <div className="grid flex-1 grid-cols-3 gap-4 md:flex md:flex-none md:items-start md:gap-0">
-          <Stage
-            label="Sent"
-            tip="Accepted by your mail server"
-            value={String(cur.sent)}
-            sub={cur.failed > 0 ? `${cur.failed} failed to send` : undefined}
-            onClick={cur.attempted > 0 ? () => onOpenStage('sent') : undefined}
-          />
-          <Connector num={cur.delivered} den={cur.sent} />
-          <Stage
-            label="Delivered"
-            tip="Sent emails that didn't bounce"
-            value={String(cur.delivered)}
-            sub={cur.sent > 0 ? `${rateText(cur.delivered, cur.sent)}${cur.sent < LOW_SAMPLE ? ' sent' : ' of sent'}` : undefined}
-            onClick={cur.delivered > 0 ? () => onOpenStage('delivered') : undefined}
-          />
-          <Connector num={cur.uniqueOpens} den={opensTracked ? cur.openEligible : 0} />
-          <Stage
-            label="Opened"
-            secondary
-            tip="Tracked opens, not confirmed reads"
-            value={opensTracked ? String(cur.uniqueOpens) : '—'}
-            sub={
-              opensTracked ? (
-                `${rateText(cur.uniqueOpens, cur.openEligible)} tracked`
-              ) : (
-                <button type="button" onClick={onEnableTracking} className="text-accent hover:underline">
+
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <KpiCard
+          label="Sent"
+          icon={<Send />}
+          tip="Accepted by your mail server"
+          value={String(cur.sent)}
+          onClick={() => onOpenStage('sent')}
+          footer={
+            cur.failed > 0 ? (
+              <>
+                <BadgeButton tone="warning" onClick={() => onOpenStage('failed')}>
+                  {cur.failed} failed
+                </BadgeButton>
+                <span>of {cur.attempted}</span>
+              </>
+            ) : (
+              <>
+                <Badge tone="success">0 failed</Badge>
+                <span>all accepted</span>
+              </>
+            )
+          }
+        />
+        <KpiCard
+          label="Delivered"
+          icon={<CircleCheck />}
+          tip="Sent emails that didn't bounce"
+          tipAlign="end"
+          value={String(cur.delivered)}
+          onClick={cur.delivered > 0 ? () => onOpenStage('delivered') : undefined}
+          footer={
+            <>
+              {/* Delivery is good news; only the bounce card carries the warning colours. */}
+              <Badge tone={cur.delivered > 0 ? 'success' : 'neutral'}>{rateText(cur.delivered, cur.sent)}</Badge>
+              <span>of sent</span>
+            </>
+          }
+        />
+        <KpiCard
+          label="Opened"
+          icon={<Eye />}
+          tip="Tracked opens, not confirmed reads"
+          value={opensTracked ? String(cur.uniqueOpens) : '—'}
+          onClick={cur.uniqueOpens > 0 ? () => onOpenStage('opened') : undefined}
+          footer={
+            opensTracked ? (
+              <>
+                <Badge tone={cur.uniqueOpens > 0 ? 'success' : 'neutral'}>{rateText(cur.uniqueOpens, cur.openEligible)}</Badge>
+                <span>of tracked</span>
+              </>
+            ) : (
+              <>
+                <BadgeButton tone="neutral" onClick={onEnableTracking}>
                   Turn on tracking
-                </button>
-              )
-            }
-            onClick={cur.uniqueOpens > 0 ? () => onOpenStage('opened') : undefined}
-          />
-        </div>
+                </BadgeButton>
+                <span>opens off</span>
+              </>
+            )
+          }
+        />
+        <KpiCard
+          label="Bounced"
+          icon={<MailX />}
+          tip="Rejected by the recipient's server. Hard bounces are blocked from future sends."
+          tipAlign="end"
+          value={String(bounced)}
+          onClick={bounced > 0 ? () => onOpenStage('bounced') : undefined}
+          footer={
+            bounced > 0 ? (
+              <>
+                <Badge tone={cur.hardBounces > 0 ? 'danger' : 'warning'}>{rateText(bounced, cur.sent)}</Badge>
+                <span>{cur.hardBounces > 0 ? `${cur.hardBounces} hard` : 'all soft'}</span>
+              </>
+            ) : (
+              <>
+                <Badge tone="success">0%</Badge>
+                <span>no bounces</span>
+              </>
+            )
+          }
+        />
+      </div>
 
-        {/* Losses, to the side: coloured only when non-zero. */}
-        <div className="flex w-full gap-6 border-t border-line pt-3 md:ml-auto md:w-auto md:flex-col md:gap-1 md:border-l md:border-t-0 md:pl-5 md:pt-1">
-          {[
-            { key: 'bounced' as const, label: 'Bounced', value: bounced, tone: cur.hardBounces > 0 ? 'text-danger' : 'text-ink' },
-            { key: 'failed' as const, label: 'Failed', value: cur.failed, tone: 'text-warning' },
-          ].map((l) => (
-            <button
-              key={l.key}
-              type="button"
-              disabled={l.value === 0}
-              onClick={() => onOpenStage(l.key)}
-              className="flex h-8 items-center gap-3 rounded-md px-1.5 text-left transition-colors enabled:hover:bg-subtle/70 disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            >
-              <span className="w-14 text-xs text-ink-3">{l.label}</span>
-              <span className={cn('w-6 text-right text-heading font-semibold tabular-nums', l.value === 0 ? 'text-ink-4' : l.tone)}>{l.value}</span>
-              <span className="w-12 text-xs tabular-nums text-ink-3">{l.value > 0 && cur.sent > 0 ? rateText(l.value, cur.sent) : ''}</span>
-            </button>
+      <Card className="p-5">
+        <CardHeader
+          title="Sending volume"
+          tip="One bar per day (or week for long ranges). Height is emails sent; segments show what happened to them."
+          meta={null}
+          action={
+            <ul className="hidden items-center gap-4 sm:flex" aria-label="Legend">
+              {VOLUME_LEGEND.map((s) => (
+                <li key={s.key} className="flex items-center gap-1.5 text-xs text-ink-2">
+                  <span className="size-2 rounded-[3px]" style={{ background: s.color }} aria-hidden="true" />
+                  {s.label}
+                </li>
+              ))}
+            </ul>
+          }
+        />
+        {(lowSample || sparse) && (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {lowSample && (
+              <Badge tone="neutral" title={`Fewer than ${LOW_SAMPLE} emails, so rates are shown as counts`}>
+                Low sample
+              </Badge>
+            )}
+            {sparse && (
+              <span className="text-xs text-ink-3">
+                Activity on {activeDays} of {series.length} days
+                {onNarrowRange && (
+                  <>
+                    {' · '}
+                    <button type="button" onClick={onNarrowRange} className="font-medium text-ink-2 underline-offset-2 hover:text-ink hover:underline">
+                      View last 7 days
+                    </button>
+                  </>
+                )}
+              </span>
+            )}
+          </div>
+        )}
+        <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 sm:hidden" aria-label="Legend">
+          {VOLUME_LEGEND.map((s) => (
+            <li key={s.key} className="flex items-center gap-1.5 text-xs text-ink-2">
+              <span className="size-2 rounded-[3px]" style={{ background: s.color }} aria-hidden="true" />
+              {s.label}
+            </li>
           ))}
+        </ul>
+        <div className="mt-4 h-[220px]">
+          <OutreachChart points={series} mode="volume" summary={summary} />
         </div>
-
-        {lowSample && (
-          <p className="w-full text-xs text-ink-3">Low sample (under {LOW_SAMPLE} emails)</p>
-        )}
-      </div>
-
-      {/* The chart explains the funnel, so it lives on the same surface. */}
-      <div className="px-5 pb-4 pt-3">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <p className="text-ui font-medium text-ink">Over time</p>
-          <SegmentedControl
-            ariaLabel="Chart view"
-            size="sm"
-            value={view}
-            onChange={setView}
-            options={[
-              { value: 'volume', label: 'Volume' },
-              { value: 'engagement', label: 'Engagement' },
-              { value: 'deliverability', label: 'Deliverability' },
-            ]}
-          />
-        </div>
-        {cur.attempted === 0 ? (
-          <p className="flex h-[240px] items-center justify-center text-ui text-ink-3">No emails sent in this period</p>
-        ) : view === 'engagement' && !opensTracked ? (
-          <div className="flex h-[240px] flex-col items-center justify-center gap-2 text-center">
-            <p className="text-ui text-ink-2">Open tracking is off</p>
-            <button type="button" onClick={onEnableTracking} className="text-ui font-medium text-accent hover:underline">
-              Turn on
-            </button>
-          </div>
-        ) : (
-          <div className="h-[280px] sm:h-[260px]">
-            <OutreachChart points={series} mode={view} summary={summary} />
-          </div>
-        )}
-      </div>
+      </Card>
     </section>
   );
 }

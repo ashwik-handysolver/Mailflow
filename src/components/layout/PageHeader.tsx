@@ -14,7 +14,7 @@ interface PageHeaderProps {
   description?: ReactNode;
   /** Small metadata next to the title. */
   meta?: ReactNode;
-  /** Item count, shown as a muted chip after the title. */
+  /** Accepted for callers; counts already live in the content, so the title stays clean. */
   count?: number;
   actions?: ReactNode;
   className?: string;
@@ -23,25 +23,22 @@ interface PageHeaderProps {
 }
 
 /** Page title and actions, rendered into the shared app header. */
-export function PageHeader({ title, description, meta, count, actions, className, wide }: PageHeaderProps) {
+export function PageHeader({ title, description, meta, actions, className, wide }: PageHeaderProps) {
   const slot = useContext(HeaderSlotContext);
   const content = (
     <div
       className={cn(
-        'mx-auto flex w-full flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-6 lg:px-8',
+        'mx-auto flex w-full flex-wrap items-end justify-between gap-x-4 gap-y-2 px-4 pb-2 pt-4 sm:px-6 lg:px-10 lg:pt-8',
         wide ? 'max-w-none' : 'max-w-[1280px]',
         className
       )}
     >
       <div className="min-w-0">
         <div className="flex items-center gap-2.5">
-          <h1 className="truncate text-[20px] font-semibold leading-7 tracking-[-0.02em] text-ink">{title}</h1>
-          {count !== undefined && (
-            <span className="rounded-md bg-muted px-1.5 text-xs font-medium leading-5 tabular-nums text-ink-2">{count}</span>
-          )}
+          <h1 className="truncate text-[22px] font-semibold leading-8 tracking-[-0.02em] text-ink sm:text-2xl">{title}</h1>
           {meta}
         </div>
-        {description && <p className="text-ui text-ink-3">{description}</p>}
+        {description && <p className="mt-0.5 text-ui text-ink-3">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2 shrink-0">{actions}</div>}
     </div>
@@ -55,7 +52,7 @@ export function PageContainer({ children, className, wide }: { children: ReactNo
   return (
     <div
       className={cn(
-        'mx-auto w-full px-4 sm:px-6 lg:px-8 pt-5 lg:pt-6 pb-12',
+        'mx-auto w-full px-4 sm:px-6 lg:px-10 pt-6 lg:pt-8 pb-16',
         wide ? 'max-w-none' : !className?.includes('max-w-') && 'max-w-[1280px]',
         className
       )}
@@ -80,7 +77,7 @@ export function SectionHeader({
   return (
     <div className={cn('flex items-end justify-between gap-4', className ?? 'mb-3')}>
       <div className="min-w-0">
-        <h2 className="text-heading font-semibold text-ink">{title}</h2>
+        <h2 className="text-[15px] font-medium tracking-[-0.01em] text-ink">{title}</h2>
         {description && <p className="text-ui text-ink-3 mt-0.5">{description}</p>}
       </div>
       {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}

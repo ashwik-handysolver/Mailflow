@@ -81,7 +81,7 @@ export function TemplatesPage() {
       />
 
       {templates.length === 0 ? (
-        <div className="rounded-lg border border-line">
+        <div>
           <EmptyState
             title="No templates yet"
             action={
@@ -92,7 +92,7 @@ export function TemplatesPage() {
           />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,460px)]">
+        <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,480px)] xl:gap-14">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2 pb-3">
               <Input
@@ -122,7 +122,7 @@ export function TemplatesPage() {
             </div>
 
             {filtered.length === 0 ? (
-              <div className="rounded-lg border border-line">
+              <div>
                 <EmptyState
                   title="No templates match"
                   action={
@@ -138,18 +138,17 @@ export function TemplatesPage() {
                 />
               </div>
             ) : (
-              <ul className="divide-y divide-line rounded-lg border border-line" aria-label="Templates">
+              <ul className="-mx-3 space-y-0.5" aria-label="Templates">
                 {filtered.map((t) => {
                   const active = wide && selected?.id === t.id;
                   return (
                     <li
                       key={t.id}
                       className={cn(
-                        'group relative flex items-center gap-3 px-4 py-3 transition-colors first:rounded-t-lg last:rounded-b-lg',
-                        active ? 'bg-accent-soft/50' : 'hover:bg-canvas'
+                        'group relative flex items-center gap-3 rounded-lg px-3 py-3 transition-colors',
+                        active ? 'bg-subtle' : 'hover:bg-subtle/60'
                       )}
                     >
-                      {active && <span className="absolute inset-y-0 left-0 w-0.5 rounded-r bg-accent" aria-hidden="true" />}
                       <button
                         type="button"
                         aria-current={active || undefined}

@@ -1,10 +1,14 @@
 import { useState } from 'react';
-import { ChevronRight, PenSquare } from 'lucide-react';
+import { Flame, PenSquare } from 'lucide-react';
 import { cn } from '../../lib/cn';
 import { formatRelativeTime } from '../../utils/analytics';
 import { EngagementFilter, LeadEngagement } from '../../utils/dashboardData';
 import { LEAD_STATUS_COLOR } from '../common/StatusBadge';
 import { InfoTip } from '../ui/InfoTip';
+import { Badge, BadgeTone } from '../ui/Badge';
+import { Avatar } from '../ui/Misc';
+import { LeadStatus } from '../../types/outreach';
+import { CARD } from '../ui/Card';
 
 const FILTERS: { value: EngagementFilter; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -14,13 +18,23 @@ const FILTERS: { value: EngagementFilter; label: string }[] = [
   { value: 'bounced', label: 'Bounced' },
 ];
 
-const TIER_TONE: Record<number, string> = {
-  1: 'text-accent',
-  2: 'text-warning',
-  3: 'text-accent',
-  4: 'text-ink-3',
-  5: 'text-danger',
+/** Heat: opens are good news (green), overdue follow-ups need a nudge (amber), bounces are a problem (red). */
+const TIER_TONE: Record<number, BadgeTone> = {
+  1: 'success',
+  2: 'warning',
+  3: 'success',
+  4: 'neutral',
+  5: 'danger',
 };
+
+function StagePill({ status }: { status: LeadStatus }) {
+  return (
+    <span className="inline-flex h-[22px] shrink-0 items-center gap-1.5 rounded-md border border-line bg-surface px-2 text-xs text-ink-2">
+      <span className="size-1.5 rounded-full" style={{ background: LEAD_STATUS_COLOR[status] }} aria-hidden="true" />
+      {status}
+    </span>
+  );
+}
 
 const PAGE = 8;
 
@@ -44,10 +58,10 @@ export function EngagedLeads({
   const shown = all ? filtered : filtered.slice(0, PAGE);
 
   return (
-    <section aria-labelledby="engaged-title">
-      <header className="mb-2.5 flex flex-wrap items-center justify-between gap-3">
+    <section aria-labelledby="engaged-title" className={cn(CARD, 'p-5')}>
+      <header className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-1.5">
-          <h2 id="engaged-title" className="text-heading font-semibold text-ink">
+          <h2 id="engaged-title" className="text-heading font-semibold tracking-[-0.01em] text-ink">
             Engaged leads
           </h2>
           <InfoTip>
@@ -69,81 +83,92 @@ export function EngagedLeads({
                   setAll(false);
                 }}
                 className={cn(
-                  'inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-default disabled:opacity-40',
-                  active ? 'bg-ink text-canvas' : 'text-ink-2 enabled:hover:bg-subtle'
+                  'inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-default disabled:opacity-35',
+                  active ? 'bg-ink font-medium text-canvas' : 'text-ink-3 enabled:hover:bg-subtle enabled:hover:text-ink'
                 )}
               >
                 {f.label}
-                <span className={cn('tabular-nums', active ? 'opacity-60' : 'text-ink-4')}>{n}</span>
+                <span className={cn('tabular-nums', active ? 'text-canvas/70' : 'text-ink-4')}>{n}</span>
               </button>
             );
           })}
         </div>
       </header>
 
-      <div className="overflow-hidden rounded-xl border border-line bg-surface">
+      <div className="-mx-2">
         {filtered.length === 0 ? (
-          <p className="px-4 py-10 text-center text-ui text-ink-3">
+          <p className="px-3 py-6 text-ui text-ink-3">
             {items.length === 0 ? 'No engagement yet' : 'No matches'}
           </p>
         ) : (
-          <ul className="divide-y divide-line">
+          <ul className="space-y-0.5">
             {shown.map((e) => {
               const last = e.lastOpenedAt ?? e.lastSentAt;
+              const when = last ? formatRelativeTime(new Date(last).toISOString()) : e.lead.lastContacted ? formatRelativeTime(e.lead.lastContacted) : null;
+              const heat = (
+                <Badge tone={TIER_TONE[e.tier] ?? 'neutral'} className="shrink-0">
+                  {e.tier === 1 && <Flame className="size-3" aria-hidden="true" />}
+                  {e.signal}
+                </Badge>
+              );
               return (
-                <li key={e.lead.id} className="group relative flex h-14 items-center">
+                <li key={e.lead.id} className="group flex items-center gap-2 rounded-lg px-2 py-2.5 transition-colors hover:bg-subtle/70">
                   <button
                     type="button"
                     onClick={() => onOpenLead(e.lead.id)}
                     title={e.reason}
-                    className="flex h-full min-w-0 flex-1 items-center gap-3 px-4 text-left transition-colors hover:bg-subtle/60 focus-visible:bg-subtle focus-visible:outline-none"
+                    className="flex min-w-0 flex-1 items-center gap-3 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   >
-                    {/* Everything about the lead reads as one unit: who, then signal · status · when. */}
+                    <Avatar name={e.lead.fullName} />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-ui text-ink">
                         <span className="font-medium">{e.lead.fullName}</span>
                         {e.lead.company && <span className="text-ink-3"> · {e.lead.company}</span>}
                       </span>
-                      <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-ink-3">
-                        <span className={cn('shrink-0 font-medium', TIER_TONE[e.tier])}>{e.signal}</span>
-                        <span aria-hidden="true">·</span>
-                        <span className="inline-flex shrink-0 items-center gap-1">
-                          <span className="size-1.5 rounded-full" style={{ background: LEAD_STATUS_COLOR[e.lead.status] }} aria-hidden="true" />
-                          {e.lead.status}
-                        </span>
-                        {(last || e.lead.lastContacted) && (
-                          <>
-                            <span aria-hidden="true">·</span>
-                            <span className="truncate tabular-nums">
-                              {last ? formatRelativeTime(new Date(last).toISOString()) : formatRelativeTime(e.lead.lastContacted!)}
-                            </span>
-                          </>
-                        )}
+                      <span className="mt-0.5 block truncate text-xs text-ink-3">
+                        {e.lead.email}
+                        {when && <span className="tabular-nums"> · {when}</span>}
+                      </span>
+                      {/* On small screens the signals sit under the name. */}
+                      <span className="mt-1.5 flex flex-wrap items-center gap-1.5 md:hidden">
+                        {heat}
+                        <StagePill status={e.lead.status} />
                       </span>
                     </span>
-                    {/* Space for the hover action on pointer devices. */}
-                    <span className="w-8 shrink-0 sm:w-24" aria-hidden="true" />
                   </button>
-                  <div className="absolute right-3 flex items-center gap-1 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-within:opacity-100">
+                  <span className="hidden shrink-0 items-center gap-1.5 md:flex">
+                    {heat}
+                    <StagePill status={e.lead.status} />
+                  </span>
+                  {/* Fixed width so badges line up whether or not the row can be followed up. */}
+                  <span className="ml-1 flex shrink-0 items-center justify-end gap-1 sm:min-w-[92px] lg:min-w-[172px]">
                     {!e.bounced && (
                       <button
                         type="button"
                         onClick={() => onFollowUp([e.lead.id])}
-                        className="inline-flex h-7 items-center gap-1.5 rounded-md border border-line-strong bg-surface px-2 text-xs font-medium text-ink-2 hover:border-ink-4 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                        aria-label={`Follow up with ${e.lead.fullName}`}
+                        className="inline-flex h-7 items-center gap-1.5 rounded-md bg-ink px-2 text-xs font-medium text-canvas transition-colors hover:bg-ink-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:px-2.5"
                       >
                         <PenSquare className="size-3.5" aria-hidden="true" />
-                        <span className="sr-only sm:not-sr-only">Follow up</span>
+                        <span className="hidden sm:inline">Follow up</span>
                       </button>
                     )}
-                    <ChevronRight className="hidden size-4 text-ink-4 sm:block" aria-hidden="true" />
-                  </div>
+                    <button
+                      type="button"
+                      onClick={() => onOpenLead(e.lead.id)}
+                      aria-label={`View ${e.lead.fullName}`}
+                      className="hidden h-7 items-center rounded-md border border-line-strong bg-surface px-2.5 text-xs font-medium text-ink-2 transition-colors hover:bg-subtle hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent lg:inline-flex"
+                    >
+                      View lead
+                    </button>
+                  </span>
                 </li>
               );
             })}
           </ul>
         )}
         {filtered.length > PAGE && (
-          <div className="flex items-center justify-between border-t border-line px-4 py-2">
+          <div className="flex items-center justify-between px-3 pt-2">
             <button type="button" onClick={() => setAll((v) => !v)} className="text-ui font-medium text-accent hover:underline">
               {all ? 'Show fewer' : `Show all ${filtered.length}`}
             </button>

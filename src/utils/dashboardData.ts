@@ -137,6 +137,23 @@ export interface ActivityEntry {
   detail?: string;
   campaignId?: string;
   leadId?: string;
+  /** How many identical consecutive events this line stands for (shown as "3×"). */
+  count?: number;
+}
+
+/**
+ * Folds runs of identical events (same kind, line, lead and campaign) into one
+ * line with a count. Entries are newest first, so the kept line has the latest time.
+ */
+export function groupRepeats(entries: ActivityEntry[]): ActivityEntry[] {
+  const out: ActivityEntry[] = [];
+  for (const e of entries) {
+    const prev = out[out.length - 1];
+    if (prev && prev.kind === e.kind && prev.title === e.title && prev.leadId === e.leadId && prev.campaignId === e.campaignId) {
+      out[out.length - 1] = { ...prev, count: (prev.count ?? 1) + 1 };
+    } else out.push(e);
+  }
+  return out;
 }
 
 export function buildActivity(input: {
@@ -225,7 +242,7 @@ export function buildActivity(input: {
       kind: 'opens',
       title:
         es.length === 1
-          ? `${nameOf(es[0].lead_id, es[0].to_email)} opened your email`
+          ? `${nameOf(es[0].lead_id, es[0].to_email)} opened ${cid && campaignName.get(cid) ? `"${campaignName.get(cid)}"` : 'your email'}`
           : `${es.length} people opened ${cid && campaignName.get(cid) ? `"${campaignName.get(cid)}"` : 'your email'}`,
       campaignId: cid,
       leadId: es.length === 1 ? es[0].lead_id ?? undefined : undefined,
@@ -244,5 +261,5 @@ export function buildActivity(input: {
     });
   }
 
-  return out.sort((a, b) => b.at - a.at);
+  return groupRepeats(out.sort((a, b) => b.at - a.at));
 }

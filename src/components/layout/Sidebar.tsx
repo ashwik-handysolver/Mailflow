@@ -45,7 +45,7 @@ function NavIconButton({ label, onClick, children }: { label: string; onClick: (
       onClick={onClick}
       aria-label={label}
       title={label}
-      className="flex size-7 items-center justify-center rounded-md text-nav-ink-3 transition-colors hover:bg-white/[0.07] hover:text-nav-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent [&_svg]:size-4"
+      className="flex size-7 items-center justify-center rounded-md text-nav-ink-3 transition-colors hover:bg-nav-raised hover:text-nav-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent [&_svg]:size-4"
     >
       {children}
     </button>
@@ -105,18 +105,15 @@ export function Sidebar({ collapsed, onToggleCollapsed, mobileOpen, onCloseMobil
             title={isCollapsed ? 'Compose email' : undefined}
             aria-label="Compose email"
             className={cn(
-              'flex w-full items-center gap-2 rounded-md bg-white/[0.06] text-ui font-medium text-nav-ink ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/10 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-nav',
-              isCollapsed ? 'h-9 justify-center' : 'h-8 px-3'
+              'flex w-full items-center gap-2 rounded-lg bg-accent text-ui font-medium text-white shadow-[0_1px_2px_rgb(0_0_0/0.12),inset_0_1px_0_rgb(255_255_255/0.12)] transition-colors hover:bg-accent-hover active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-nav',
+              isCollapsed ? 'h-9 justify-center' : 'h-9 justify-center px-3'
             )}
           >
-            <PenSquare className="size-4 shrink-0 text-[#f0875a]" />
+            <PenSquare className="size-4 shrink-0" />
             {!isCollapsed && <span>Compose email</span>}
           </button>
         </div>
 
-        {!isCollapsed && (
-          <p className="px-5 pb-1.5 text-2xs font-medium uppercase tracking-[0.08em] text-nav-ink-3">Workspace</p>
-        )}
         <nav aria-label="Main" className={cn('flex flex-col gap-0.5', isCollapsed ? 'px-2' : 'px-3')}>
           <NavItem icon={<LayoutDashboard />} label="Dashboard" active={page === 'dashboard'} collapsed={isCollapsed} onClick={() => go('dashboard')} />
           <NavItem icon={<Users />} label="Leads" count={leads.length} active={page === 'leads'} collapsed={isCollapsed} onClick={() => go('leads')} />
@@ -200,14 +197,11 @@ function NavItem({ icon, label, count, active, collapsed, onClick }: NavItemProp
         collapsed ? 'justify-center' : 'px-2.5',
         active
           ? 'bg-nav-raised text-nav-ink [&_svg]:text-nav-ink'
-          : 'text-nav-ink-2 hover:bg-white/[0.05] hover:text-nav-ink [&_svg]:text-nav-ink-3 hover:[&_svg]:text-nav-ink-2'
+          : 'text-nav-ink-2 hover:bg-nav-raised/60 hover:text-nav-ink [&_svg]:text-nav-ink-3 hover:[&_svg]:text-nav-ink-2'
       )}
     >
-      {/* Active marker: a short brand-coloured bar on the left edge. */}
-      {active && <span className={cn("absolute top-1.5 h-5 w-0.5 rounded-r bg-accent", collapsed ? "-left-2" : "-left-3")} aria-hidden="true" />}
       {icon}
       {!collapsed && <span className="flex-1 truncate text-left">{label}</span>}
-      {!collapsed && count !== undefined && <span className="text-xs font-normal tabular-nums text-nav-ink-3">{count}</span>}
     </button>
   );
 }

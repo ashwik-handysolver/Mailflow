@@ -35,7 +35,7 @@ export function InlineError({ message, onRetry }: { message: string; onRetry?: (
 /** Small numeric chip next to a title. */
 export function CountChip({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <span className={cn('rounded bg-muted px-1.5 text-2xs font-medium leading-5 tabular-nums text-ink-2', className)}>{children}</span>
+    <span className={cn('text-ui tabular-nums text-ink-4', className)}>{children}</span>
   );
 }
 
@@ -71,12 +71,12 @@ export function FilterChips<T extends string>({
             disabled={o.count === 0 && i !== 0}
             onClick={() => onChange(o.value)}
             className={cn(
-              'inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-default disabled:opacity-40',
-              active ? 'bg-ink text-canvas' : 'text-ink-2 enabled:hover:bg-subtle'
+              'inline-flex h-7 items-center gap-1.5 rounded-full px-3 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-default disabled:opacity-35',
+              active ? 'bg-subtle font-medium text-ink' : 'text-ink-3 enabled:hover:text-ink'
             )}
           >
             {o.label}
-            {o.count !== undefined && <span className={cn('tabular-nums', active ? 'opacity-60' : 'text-ink-4')}>{o.count}</span>}
+            {o.count !== undefined && <span className="tabular-nums text-ink-4">{o.count}</span>}
           </button>
         );
       })}

@@ -1,7 +1,8 @@
 import { Fragment, ReactNode, useMemo, useState } from 'react';
 import { ArrowDown, ArrowUp, ChevronRight, ListFilter, Search } from 'lucide-react';
 import { Campaign, CampaignStatus } from '../../types/outreach';
-import { CampaignStatusBadge } from '../common/StatusBadge';
+import { Badge, BadgeTone } from '../ui/Badge';
+import { CARD } from '../ui/Card';
 import { Menu } from '../ui/Menu';
 import { formatFullDateTime, formatShortDate } from '../../utils/analytics';
 import { bounceRate, CampaignRow, deliveryRate, Summary, uniqueOpenRate } from '../../utils/outreachAnalytics';
@@ -81,6 +82,23 @@ function toTableRows(rows: CampaignRow[]): TableRow[] {
   });
 }
 
+const STATUS_TONE: Record<CampaignStatus, BadgeTone> = { Completed: 'success', Partial: 'warning', Failed: 'danger', Simulated: 'neutral' };
+const STATUS_HINT: Record<CampaignStatus, string> = {
+  Completed: 'All emails were accepted for delivery',
+  Partial: 'Some recipients failed',
+  Failed: 'No emails could be sent',
+  Simulated: 'Sent through the simulator; no real email left MailFlow',
+};
+
+/** Campaign status as a chip in its own column. */
+export function StatusChip({ status }: { status: CampaignStatus }) {
+  return (
+    <Badge tone={STATUS_TONE[status]} dot title={STATUS_HINT[status]}>
+      {status}
+    </Badge>
+  );
+}
+
 /** Rate plus its numerator/denominator, so 100% of 1 doesn't read like 100% of 1,000. */
 function RateCell({
   rate,
@@ -109,12 +127,7 @@ function RateCell({
     );
   }
   return (
-    <span className="inline-flex items-center justify-end gap-2">
-      {bar && (
-        <span className="hidden h-1 w-8 overflow-hidden rounded-full bg-muted xl:block" aria-hidden="true">
-          <span className="block h-full rounded-full" style={{ width: `${Math.min(100, rate)}%`, background: bar }} />
-        </span>
-      )}
+    <span className="inline-flex items-center justify-end gap-2" data-series={bar}>
       <span className={cn('tabular-nums', danger ? 'font-medium text-danger' : 'text-ink')} title={`${num}/${den}`}>
         {rate.toFixed(1)}%
       </span>
@@ -134,9 +147,11 @@ interface CampaignsTableProps {
   emptyText?: string;
   /** Show simulated sends without opening the filter (Campaigns page). */
   showSimulated?: boolean;
+  /** Render as a standalone card (dashboard). */
+  card?: boolean;
 }
 
-export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, emptyText = 'No campaigns in this period', showSimulated = false }: CampaignsTableProps) {
+export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, emptyText = 'No campaigns in this period', showSimulated = false, card = false }: CampaignsTableProps) {
   const [sort, setSort] = useState<{ key: SortKey; dir: 'asc' | 'desc' }>({ key: 'sentAt', dir: 'desc' });
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
@@ -174,6 +189,9 @@ export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, 
     });
   }, [all, query, status, includeSimulated, sort]);
   const LIMIT = limit;
+  // Inset for the first and last columns: flush on a page, padded inside a card.
+  const edgeL = card ? 'pl-5' : 'pl-0';
+  const edgeR = card ? 'pr-5' : 'pr-0';
   const shown = showAll ? visible : visible.slice(0, LIMIT);
   const filtersActive = status !== 'all' || includeSimulated !== showSimulated;
 
@@ -191,14 +209,14 @@ export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, 
     return (
       <th
         scope="col"
-        className={cn('h-9 px-3 text-2xs font-medium uppercase tracking-[0.06em] text-ink-3', className)}
+        className={cn('h-9 px-3 text-xs font-normal text-ink-3', className)}
         aria-sort={key ? (active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none') : undefined}
       >
         {key ? (
           <button
             type="button"
             onClick={() => setSort((s) => ({ key, dir: s.key === key && s.dir === 'desc' ? 'asc' : 'desc' }))}
-            className={cn('inline-flex items-center gap-1 uppercase hover:text-ink focus-visible:outline-none focus-visible:text-ink', active && 'text-ink')}
+            className={cn('inline-flex items-center gap-1 hover:text-ink focus-visible:outline-none focus-visible:text-ink', active && 'text-ink')}
           >
             {label}
             {active && (sort.dir === 'desc' ? <ArrowDown className="size-3" /> : <ArrowUp className="size-3" />)}
@@ -236,16 +254,19 @@ export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, 
   };
 
   return (
-    <section aria-label="Campaigns">
-      <header className={cn('mb-2.5 flex flex-wrap items-center gap-3', hideTitle ? 'justify-end' : 'justify-between')}>
+    <section aria-label="Campaigns" className={cn(card && cn(CARD, 'overflow-hidden'))}>
+      <header className={cn('flex flex-wrap items-center gap-3', card ? 'px-5 pb-3 pt-5' : 'mb-2.5', hideTitle ? 'justify-end' : 'justify-between')}>
         {!hideTitle && (
           <div className="flex items-center gap-1.5">
-            <h2 className="text-heading font-semibold text-ink">{onViewAll ? 'Recent campaigns' : 'Campaigns'}</h2>
-            <span className="text-ui tabular-nums text-ink-3">{visible.length}</span>
+            <h2 className={cn('tracking-[-0.01em] text-ink', card ? 'text-heading font-semibold' : 'text-[15px] font-medium')}>{onViewAll ? 'Recent campaigns' : 'Campaigns'}</h2>
           </div>
         )}
         {onViewAll ? (
-          <button type="button" onClick={onViewAll} className="text-xs font-medium text-accent hover:underline">
+          <button
+            type="button"
+            onClick={onViewAll}
+            className="inline-flex h-7 items-center rounded-md px-2 text-xs font-medium text-ink-2 transition-colors hover:bg-subtle hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
             View all
           </button>
         ) : (
@@ -297,9 +318,9 @@ export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, 
         )}
       </header>
 
-      <div className="overflow-hidden rounded-xl border border-line bg-surface">
+      <div>
         {visible.length === 0 ? (
-          <p className="px-4 py-10 text-center text-ui text-ink-3">
+          <p className={cn('py-6 text-ui text-ink-3', card && 'px-5')}>
             {all.length === 0 ? emptyText : 'No matches'}
           </p>
         ) : (
@@ -308,14 +329,15 @@ export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, 
             <div className="hidden overflow-x-auto scrollbar-thin md:block">
               <table className="w-full text-ui">
                 <thead>
-                  <tr className="border-b border-line bg-subtle/50 text-left">
-                    {th(null, 'Campaign', 'pl-4')}
+                  <tr className={cn('border-b border-line text-left', card && 'border-t bg-subtle/40')}>
+                    {th(null, 'Campaign', edgeL)}
                     {th('recipients', 'Recipients', 'text-right')}
                     {th('delivered', 'Delivered', 'text-right')}
                     {th('openRate', 'Opens', 'hidden text-right md:table-cell')}
                     {th('bounceRate', 'Bounces', 'hidden text-right sm:table-cell')}
+                    {th(null, 'Status', '')}
                     {th('sentAt', 'Sent', '')}
-                    <th scope="col" className="w-8">
+                    <th scope="col" className={cn('w-10', edgeR)}>
                       <span className="sr-only">Open</span>
                     </th>
                   </tr>
@@ -328,9 +350,9 @@ export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, 
                       <Fragment key={r.key}>
                         <tr
                           onClick={() => openRow(r)}
-                          className="group h-12 cursor-pointer border-b border-line transition-colors last:border-b-0 hover:bg-subtle/60"
+                          className="group h-14 cursor-pointer border-b border-line/70 transition-colors last:border-b-0 hover:bg-subtle/50"
                         >
-                          <td className="w-full max-w-0 pl-4 pr-3">
+                          <td className={cn('w-full max-w-0 pr-3', edgeL)}>
                             <button
                               type="button"
                               aria-expanded={isGroup ? open : undefined}
@@ -340,32 +362,27 @@ export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, 
                               }}
                               className="flex max-w-full min-w-0 items-center gap-2 text-left focus-visible:outline-none focus-visible:underline"
                             >
-                              {isGroup && (
-                                <ChevronRight className={cn('size-3.5 shrink-0 text-ink-3 transition-transform', open && 'rotate-90')} aria-hidden="true" />
-                              )}
                               <span className="min-w-0">
                                 <span className="block truncate font-medium text-ink">{r.name}</span>
                                 <span className="block truncate text-xs text-ink-3">{r.template}</span>
                               </span>
                               {isGroup && (
-                                <span className="shrink-0 rounded-sm bg-subtle px-1.5 text-2xs font-medium tabular-nums text-ink-2">
+                                <span className="shrink-0 rounded-full bg-subtle px-2 py-0.5 text-2xs font-medium tabular-nums text-ink-2">
                                   {r.sends.length} sends
-                                </span>
-                              )}
-                              {r.simulated && <span className="shrink-0 rounded-sm bg-subtle px-1.5 text-2xs text-ink-3">Simulated</span>}
-                              {!r.simulated && r.status !== 'Completed' && (
-                                <span className="shrink-0">
-                                  <CampaignStatusBadge status={r.status} />
                                 </span>
                               )}
                             </button>
                           </td>
                           {cells(r, false)}
+                          <td className="px-3">
+                            <StatusChip status={r.status} />
+                          </td>
                           <td className="whitespace-nowrap px-3 tabular-nums text-ink-2" title={formatFullDateTime(new Date(r.sentAt).toISOString())}>
                             {formatShortDate(new Date(r.sentAt).toISOString())}
                           </td>
-                          <td className="pr-3 text-ink-4 group-hover:text-ink-2">
-                            {!isGroup && <ChevronRight className="size-4" aria-hidden="true" />}
+                          <td className={cn('text-right text-ink-4 group-hover:text-ink-2', edgeR)}>
+                            {/* Same place on every row: groups expand (chevron turns down), single sends open. */}
+                            <ChevronRight className={cn('ml-auto size-4 transition-transform', isGroup && open && 'rotate-90')} aria-hidden="true" />
                           </td>
                         </tr>
                         {isGroup &&
@@ -376,7 +393,7 @@ export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, 
                               onClick={() => onOpen(s.campaign)}
                               className="group h-10 cursor-pointer border-b border-line bg-subtle/30 text-ui transition-colors hover:bg-subtle/70"
                             >
-                              <td className="pl-10 pr-3 text-ink-2">
+                              <td className={cn('pr-3 text-ink-2', card ? 'pl-9' : 'pl-4')}>
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -387,17 +404,15 @@ export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, 
                                 >
                                   Send {r.sends.length - i}
                                   <span className="ml-2 text-xs text-ink-3">{formatFullDateTime(s.campaign.sentAt)}</span>
-                                  {s.campaign.status !== 'Completed' && (
-                                    <span className="ml-2 inline-block align-middle">
-                                      <CampaignStatusBadge status={s.campaign.status} />
-                                    </span>
-                                  )}
                                 </button>
                               </td>
                               {cells(s, true)}
+                              <td className="px-3">
+                                <StatusChip status={s.campaign.status} />
+                              </td>
                               <td className="whitespace-nowrap px-3 tabular-nums text-ink-3">{formatShortDate(s.campaign.sentAt)}</td>
-                              <td className="pr-3 text-ink-4 group-hover:text-ink-2">
-                                <ChevronRight className="size-4" aria-hidden="true" />
+                              <td className={cn('text-right text-ink-4 group-hover:text-ink-2', edgeR)}>
+                                <ChevronRight className="ml-auto size-4" aria-hidden="true" />
                               </td>
                             </tr>
                           ))}
@@ -409,13 +424,13 @@ export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, 
             </div>
 
             {/* Mobile: cards */}
-            <ul className="divide-y divide-line md:hidden">
+            <ul className={cn('divide-y divide-line/70 md:hidden', card && 'border-t border-line')}>
               {shown.map((r) => (
                 <li key={r.key}>
                   <button
                     type="button"
                     onClick={() => onOpen(r.sends[0].campaign)}
-                    className="block w-full px-4 py-3 text-left hover:bg-subtle/60 focus-visible:bg-subtle focus-visible:outline-none"
+                    className={cn('block w-full py-3 text-left focus-visible:bg-subtle focus-visible:outline-none', card && 'px-5')}
                   >
                     <span className="flex items-start justify-between gap-3">
                       <span className="min-w-0">
@@ -425,7 +440,10 @@ export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, 
                           {r.sends.length > 1 && ` · ${r.sends.length} sends`}
                         </span>
                       </span>
-                      <CampaignStatusBadge status={r.status} />
+                      <span className="flex shrink-0 items-center gap-1.5">
+                        <StatusChip status={r.status} />
+                        <ChevronRight className="size-4 text-ink-4" aria-hidden="true" />
+                      </span>
                     </span>
                     <span className="mt-2 grid grid-cols-3 gap-2 text-xs">
                       {[
@@ -449,7 +467,7 @@ export function CampaignsTable({ rows, onOpen, limit = 8, onViewAll, hideTitle, 
           </>
         )}
         {!onViewAll && visible.length > LIMIT && (
-          <div className="border-t border-line px-4 py-2">
+          <div className={cn('pt-3', card && 'px-5 pb-4')}>
             <button type="button" onClick={() => setShowAll((v) => !v)} className="text-ui font-medium text-accent hover:underline">
               {showAll ? 'Show fewer' : `Show all ${visible.length}`}
             </button>

@@ -9,9 +9,9 @@ import { buildEmailLog, countEmails, EmailLogRow, EmailState } from '../../utils
 import { useMailboxes } from '../../utils/mailboxes';
 import { useEmailProvider } from '../../services/emailProvider';
 import { PageContainer, PageHeader } from '../layout/PageHeader';
-import { CampaignsTable } from '../dashboard/CampaignsTable';
+import { CampaignsTable, StatusChip } from '../dashboard/CampaignsTable';
+import { CARD } from '../ui/Card';
 import { rateText } from '../dashboard/FunnelHero';
-import { CampaignStatusBadge } from '../common/StatusBadge';
 import { AttachmentList } from '../common/AttachmentList';
 import { Button } from '../ui/Button';
 import { Menu } from '../ui/Menu';
@@ -173,7 +173,7 @@ export function CampaignsPage() {
     <PageContainer>
       <PageHeader title="Campaigns" count={campaigns.length} actions={refreshAction} />
 
-      <div className="mb-5 flex items-center gap-5 border-b border-line" role="tablist" aria-label="Campaign views">
+      <div className="mb-8 flex items-center gap-6 border-b border-line" role="tablist" aria-label="Campaign views">
         {(
           [
             ['campaigns', 'Campaigns', campaigns.length],
@@ -323,7 +323,7 @@ function AllEmails({
       </div>
 
       {f.filtered.length === 0 ? (
-        <div className="rounded-xl border border-line bg-surface">
+        <div>
           <EmptyState compact title={log.length === 0 ? 'No emails sent yet' : 'No emails match'} />
         </div>
       ) : (
@@ -394,8 +394,8 @@ function CampaignDetail({
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-title font-semibold tracking-[-0.01em] text-ink">{campaign.name}</h2>
-            <CampaignStatusBadge status={campaign.status} />
+            <h2 className="text-xl font-semibold leading-8 tracking-[-0.02em] text-ink">{campaign.name}</h2>
+            <StatusChip status={campaign.status} />
           </div>
           <p className="mt-0.5 text-ui text-ink-3">
             {[campaign.templateName, `Sent ${formatWhen(new Date(campaign.sentAt).getTime())}`, fromBoxes.length ? `From ${fromBoxes.join(', ')}` : null]
@@ -418,12 +418,12 @@ function CampaignDetail({
         </div>
       )}
 
-      <dl className={cn('mb-6 grid gap-px overflow-hidden rounded-xl border border-line bg-line', simulated ? 'grid-cols-1 sm:w-48' : 'grid-cols-2 sm:grid-cols-5')}>
+      <dl className={cn('mb-10 grid gap-3 sm:gap-4', simulated ? 'grid-cols-1 sm:w-64' : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5')}>
         {stats.map((s) => (
-          <div key={s.label} className="bg-surface px-4 py-3">
-            <dt className="text-xs text-ink-3">{s.label}</dt>
-            <dd className={cn('mt-0.5 text-metric font-semibold tabular-nums tracking-[-0.02em]', s.tone ?? 'text-ink')}>{s.value}</dd>
-            {s.sub && <dd className="text-xs tabular-nums text-ink-3">{s.sub}</dd>}
+          <div key={s.label} className={cn(CARD, 'min-w-0 p-4')}>
+            <dt className="text-ui font-medium text-ink-2">{s.label}</dt>
+            <dd className={cn('mt-2 text-2xl font-semibold leading-8 tracking-tight tabular-nums', s.tone ?? 'text-ink')}>{s.value}</dd>
+            {s.sub && <dd className="mt-1 text-xs tabular-nums text-ink-3">{s.sub}</dd>}
           </div>
         ))}
       </dl>
@@ -438,17 +438,17 @@ function CampaignDetail({
       <section aria-label="Recipients">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <h3 className="text-heading font-semibold text-ink">Recipients</h3>
+            <h3 className="text-[15px] font-medium tracking-[-0.01em] text-ink">Recipients</h3>
             {!simulated && <FilterChips label="Filter recipients" value={f.state} onChange={f.setState} options={f.options.filter((o) => o.value !== 'simulated')} />}
           </div>
           {rows.length > 10 && <SearchBox value={f.query} onChange={f.setQuery} placeholder="Search recipients" />}
         </div>
         {rows.length === 0 ? (
-          <div className="rounded-xl border border-line bg-surface">
+          <div>
             <EmptyState compact title="No per-recipient records for this campaign" />
           </div>
         ) : f.filtered.length === 0 && !simulated ? (
-          <div className="rounded-xl border border-line bg-surface">
+          <div>
             <EmptyState compact title="No recipients match" />
           </div>
         ) : (

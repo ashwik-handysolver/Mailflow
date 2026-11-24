@@ -23,6 +23,7 @@ import {
   summarize,
 } from '../../utils/outreachAnalytics';
 import { PageContainer, PageHeader } from '../layout/PageHeader';
+import { CardAction } from '../ui/Card';
 import { CampaignsTable } from './CampaignsTable';
 import { DateRangeControl } from './DateRangeControl';
 import { RecordRow, RecordsDrawer, RecordsView } from './RecordsDrawer';
@@ -32,7 +33,9 @@ import { EngagedLeads } from './EngagedLeads';
 import {
   ActItem,
   ActNowList,
+  HealthBadge,
   HealthRow,
+  HealthState,
   InlineError,
   PipelineSnapshot,
   RailSection,
@@ -145,6 +148,8 @@ export function DashboardPage() {
     () => buildActivity({ campaigns, facts, events, unsubscribes: unsubscribes ?? [], leads, range }).slice(0, ACTIVITY_LIMIT),
     [campaigns, facts, events, unsubscribes, leads, range]
   );
+  const weekStart = presetRange(7).from.getTime();
+  const allInLastWeek = preset !== 7 && current.length > 0 && current.every((f) => f.sentAt >= weekStart);
   const counts = Object.fromEntries(STATUSES.map((s) => [s, leads.filter((l) => l.status === s).length])) as Record<LeadStatus, number>;
 
   // ----- Drill-downs: every number opens the records behind it -----
@@ -216,7 +221,7 @@ export function DashboardPage() {
       why: broken[0].last_error ?? `${broken[0].email} is paused`,
       count: broken.length,
       onOpen: () => navigate('settings'),
-      action: { label: 'Open Settings', onClick: () => navigate('settings') },
+      openLabel: 'Open Settings',
     });
   const badCampaigns = rows.filter((r) => !r.simulated && r.bounceRate !== null && r.bounceRate >= 5 && r.summary.sent >= 5);
   if (badCampaigns.length > 0)
@@ -226,6 +231,7 @@ export function DashboardPage() {
       title: 'High bounce rate',
       why: 'Over 5% bounced; hurts sender reputation',
       count: badCampaigns.length,
+      openLabel: 'Review campaigns',
       onOpen: () =>
         setRecords({
           title: 'Campaigns over 5% bounce rate',
@@ -249,6 +255,7 @@ export function DashboardPage() {
       title: 'Invalid email addresses',
       why: 'Blocked from future sends',
       count: invalid.length,
+      openLabel: 'Review bounced list',
       onOpen: () => showFacts('Invalid email addresses', invalid),
     });
   const failed = byOutcome('failed');
@@ -259,6 +266,7 @@ export function DashboardPage() {
       title: 'Failed sends',
       why: 'Rejected by the mail server',
       count: failed.length,
+      openLabel: 'Review failed sends',
       onOpen: () => showFacts('Failed to send', failed),
     });
   if (followUps.length > 0)
@@ -268,6 +276,7 @@ export function DashboardPage() {
       title: 'Follow-ups due',
       why: `No contact in ${FOLLOW_UP_AFTER_DAYS}+ days`,
       count: followUps.length,
+      openLabel: 'View leads',
       onOpen: () => showLeads('Follow-ups due', followUps.map((l) => l.id), lastContact),
       action: { label: `Email ${followUps.length === 1 ? 'them' : `all ${followUps.length}`}`, onClick: () => emailLeads(followUps.map((l) => l.id)) },
     });
@@ -278,6 +287,7 @@ export function DashboardPage() {
       title: 'Interested leads waiting',
       why: `Last contacted ${INTERESTED_NUDGE_DAYS}+ days ago`,
       count: interestedWaiting.length,
+      openLabel: 'View leads',
       onOpen: () => showLeads('Interested leads waiting', interestedWaiting.map((l) => l.id), lastContact),
       action: { label: 'Email them', onClick: () => emailLeads(interestedWaiting.map((l) => l.id)) },
     });
@@ -287,6 +297,7 @@ export function DashboardPage() {
       severity: 'task',
       title: 'Never contacted',
       count: neverContacted.length,
+      openLabel: 'View leads',
       onOpen: () => showLeads('Never contacted', neverContacted.map((l) => l.id), (id) => `Added ${formatShortDate(leads.find((l) => l.id === id)!.createdAt)}`),
       action: { label: 'Start a campaign', onClick: () => emailLeads(neverContacted.map((l) => l.id)) },
     });
@@ -304,9 +315,22 @@ export function DashboardPage() {
     .sort()
     .pop();
   const checkError = active.find((m) => m.last_bounce_check_error)?.last_bounce_check_error;
+  // Hard bounces drive sender reputation, so the row carries a meter against the limit.
+  const hardRow: HealthRow = {
+    label: 'Hard bounces',
+    value:
+      hardRate === null
+        ? 'Nothing sent'
+        : cur.sent < LOW_SAMPLE
+        ? `${cur.hardBounces} of ${cur.sent} (${hardRate.toFixed(0)}%)`
+        : `${hardRate.toFixed(1)}%`,
+    tone: hardRate === null ? 'muted' : hardRate > BOUNCE_LIMIT ? 'bad' : cur.hardBounces > 0 ? 'warn' : 'ok',
+    gauge: hardRate === null ? undefined : { value: hardRate, limit: BOUNCE_LIMIT },
+  };
   const healthRows: HealthRow[] = !supabase
     ? [
         { label: 'Mode', value: 'Simulation: no real email is sent', tone: 'muted' },
+        ...(hardRate === null ? [] : [hardRow]),
         { label: 'Open tracking', value: settings.openTrackingEnabled ? 'On' : 'Off', tone: 'muted' },
       ]
     : [
@@ -319,16 +343,7 @@ export function DashboardPage() {
         ...(active.length > 0
           ? [{ label: 'Today', value: `${sentToday} of ${limit} sent`, meter: limit > 0 ? sentToday / limit : 0, tone: (sentToday >= limit ? 'warn' : 'ok') as HealthRow['tone'] }]
           : []),
-        {
-          label: 'Hard bounces',
-          value:
-            hardRate === null
-              ? 'Nothing sent'
-              : cur.sent < LOW_SAMPLE
-              ? `${cur.hardBounces} of ${cur.sent} · limit ${BOUNCE_LIMIT}%`
-              : `${hardRate.toFixed(1)}% · limit ${BOUNCE_LIMIT}%`,
-          tone: hardRate === null ? 'muted' : hardRate > BOUNCE_LIMIT ? 'bad' : cur.hardBounces > 0 ? 'warn' : 'ok',
-        },
+        hardRow,
         {
           label: 'Unsubscribes',
           value: unsubError ? 'Couldn\'t load' : unsubscribes === null ? '…' : String(unsubsInRange.length),
@@ -348,6 +363,13 @@ export function DashboardPage() {
         },
       ];
   const healthIssue = healthRows.some((r) => r.tone === 'bad');
+  const healthState: HealthState = healthIssue
+    ? 'risk'
+    : healthRows.some((r) => r.tone === 'warn')
+    ? 'attention'
+    : supabase
+    ? 'healthy'
+    : 'simulation';
 
   // ----- Header -----
   const firstName = settings.userName.split(' ')[0] || 'there';
@@ -382,16 +404,16 @@ export function DashboardPage() {
           </span>
         }
         actions={
-          <div className="flex items-center rounded-lg border border-line bg-surface p-0.5">
+          <div className="flex items-center">
             <DateRangeControl preset={preset} range={range} onChange={(p, r) => setView({ preset: p, range: r })} />
           </div>
         }
       />
 
-      <PageContainer wide className="pt-6 lg:pt-8">
-        <div className="grid grid-cols-1 gap-8 xl:grid-cols-12">
+      <PageContainer wide className="pt-5 lg:pt-6">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 xl:grid-cols-12">
           {/* Briefing column */}
-          <div className="min-w-0 space-y-8 xl:col-span-8">
+          <div className="min-w-0 space-y-4 sm:space-y-6 xl:col-span-8">
             {/* Below xl, Act now leads the page. */}
             <div className="xl:hidden">
               <RailSection title="Act now" meta={act.length || undefined} first>
@@ -407,6 +429,7 @@ export function DashboardPage() {
               emptyRangeLabel={shortRange(range)}
               onCompose={() => openComposer()}
               onWiderRange={preset === 90 ? undefined : () => setView({ preset: 90, range: presetRange(90) })}
+              onNarrowRange={allInLastWeek ? () => setView({ preset: 7, range: presetRange(7) }) : undefined}
             />
 
             {eventsStatus === 'error' && (
@@ -415,11 +438,11 @@ export function DashboardPage() {
 
             <EngagedLeads items={engaged} onOpenLead={(id) => openLead(id)} onFollowUp={emailLeads} />
 
-            <CampaignsTable rows={rows} onOpen={(c) => navigate('campaigns', { openCampaignId: c.id })} limit={5} onViewAll={() => navigate('campaigns')} />
+            <CampaignsTable card rows={rows} onOpen={(c) => navigate('campaigns', { openCampaignId: c.id })} limit={5} onViewAll={() => navigate('campaigns')} />
           </div>
 
           {/* Action rail: on the canvas, divided by hairlines; scrolls with the page. */}
-          <aside aria-label="Action rail" className="grid min-w-0 content-start gap-x-8 gap-y-6 md:grid-cols-2 xl:col-span-4 xl:block xl:space-y-6">
+          <aside aria-label="Action rail" className="grid min-w-0 content-start gap-4 sm:gap-6 md:grid-cols-2 xl:col-span-4 xl:grid-cols-1">
             <div className="hidden xl:block">
               <RailSection title="Act now" meta={act.length || undefined} first>
                 {actNow}
@@ -434,11 +457,10 @@ export function DashboardPage() {
               title="Sending health"
               tip={`Keep hard bounces under ${BOUNCE_LIMIT}%`}
               action={
-                supabase ? (
-                  <button type="button" onClick={() => navigate('settings')} className="text-xs font-medium text-accent hover:underline">
-                    Settings
-                  </button>
-                ) : undefined
+                <div className="flex items-center gap-1">
+                  {mailboxes !== null && !mailboxError && <HealthBadge state={healthState} />}
+                  {supabase && <CardAction onClick={() => navigate('settings')}>Settings</CardAction>}
+                </div>
               }
             >
               {mailboxError ? (
@@ -453,9 +475,7 @@ export function DashboardPage() {
             <RailSection
               title="Recent activity"
               action={
-                <button type="button" onClick={() => navigate('audit')} className="text-xs font-medium text-accent hover:underline">
-                  Full log
-                </button>
+                <CardAction onClick={() => navigate('audit')}>Full log</CardAction>
               }
             >
               {eventsStatus === 'loading' && events.length === 0 && supabase ? (
