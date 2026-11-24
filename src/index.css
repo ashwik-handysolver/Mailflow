@@ -1,0 +1,356 @@
+@import "tailwindcss";
+
+/*
+ * MailFlow design tokens.
+ * Every colour, type size, radius and shadow used by components comes from here.
+ * Tailwind v4 turns each token into utilities, e.g. --color-ink -> text-ink / bg-ink.
+ */
+@theme {
+  --font-sans: "Geist", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Instrument Serif", ui-serif, Georgia, serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Surfaces: warm neutral workspace, white working surfaces */
+  --color-canvas: #f5f4f0;
+  --color-surface: #ffffff;
+  --color-subtle: #f3f2ee;
+  --color-muted: #eae8e2;
+
+  /* Lines */
+  --color-line: #e5e3dc;
+  --color-line-strong: #d4d1c8;
+
+  /* Text: deep charcoal, hierarchy through weight and tone */
+  --color-ink: #19191d;
+  --color-ink-2: #4a4a52;
+  --color-ink-3: #6a6a72;
+  --color-ink-4: #a09fa5;
+
+  /* Navigation (dark sidebar) */
+  --color-nav: #17171b;
+  --color-nav-raised: #222227;
+  --color-nav-ink: #ededf0;
+  --color-nav-ink-2: #a3a3ad;
+  --color-nav-ink-3: #6e6e78;
+
+  /* Accent: ember, drawn from the logo; one brand colour across sign-in and app */
+  --color-accent: #c2410c;
+  --color-accent-hover: #9a3412;
+  --color-accent-soft: #fff1e6;
+  --color-accent-line: #fbcdae;
+  --color-accent-ink: #9a3412;
+
+  /* Status */
+  /* Muted teal for successful activity */
+  --color-success: #0e7c6b;
+  --color-success-soft: #e9f5f2;
+  --color-success-line: #b5ddd3;
+  --color-warning: #a16207;
+  --color-warning-soft: #fef9e7;
+  --color-warning-line: #f3de9a;
+  --color-danger: #b42318;
+  --color-danger-hover: #912018;
+  --color-danger-soft: #fef3f2;
+  --color-danger-line: #f8c9c4;
+  --color-info: #1d4ed8;
+  --color-info-soft: #eff5ff;
+  --color-info-line: #c3d6fb;
+  --color-teal: #0f766e;
+
+  /* Lead pipeline palette (kept separate from the interactive accent) */
+  /* Pipeline: one warm ramp from cold (New) to hot (Follow-up), teal for won. */
+  --color-status-new: #b9b4a8;
+  --color-status-contacted: #8c8677;
+  --color-status-interested: #e07b3c;
+  --color-status-followup: #c2410c;
+  --color-status-converted: #0e7c6b;
+  --color-status-lost: #d4d1c8;
+
+  /* Chart series */
+  --color-series-sent: #a8a397;
+  --color-series-delivered: #0e7c6b;
+  --color-series-opened: #c2410c;
+  --color-series-clicked: #d97706;
+
+  /* Radii — kept tight; softness comes from type and spacing, not corners */
+  --radius-sm: 0.1875rem;
+  --radius-md: 0.3125rem;
+  --radius-lg: 0.375rem;
+  --radius-xl: 0.5rem;
+
+  /* Type scale */
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+  --text-ui: 0.8125rem;
+  --text-ui--line-height: 1.25rem;
+  --text-heading: 0.875rem;
+  --text-heading--line-height: 1.25rem;
+  --text-title: 1.25rem;
+  --text-title--line-height: 1.75rem;
+  --text-metric: 1.5rem;
+  --text-metric--line-height: 2rem;
+  --text-figure: 1.75rem;
+  --text-figure--line-height: 2rem;
+  --text-figure--letter-spacing: -0.03em;
+  --text-display: 1.375rem;
+  --text-display--line-height: 1.75rem;
+  --text-display--letter-spacing: -0.02em;
+
+  /* Elevation (used only for floating layers) */
+  --shadow-xs: 0 1px 2px rgba(24, 24, 27, 0.05);
+  --shadow-float: 0 1px 2px rgba(24, 24, 27, 0.04), 0 6px 20px -6px rgba(24, 24, 27, 0.1);
+  --shadow-overlay: 0 1px 2px rgba(24, 24, 27, 0.04), 0 8px 24px -4px rgba(24, 24, 27, 0.12);
+  --shadow-dialog: 0 2px 4px rgba(24, 24, 27, 0.04), 0 24px 48px -12px rgba(24, 24, 27, 0.22);
+
+  --animate-fade-in: fade-in 140ms ease-out;
+  --animate-scale-in: scale-in 160ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-in-right: slide-in-right 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-up: slide-up 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-slide-in-left: slide-in-left 200ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  @keyframes slide-in-left {
+    from { transform: translateX(-24px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes scale-in {
+    from { opacity: 0; transform: translateY(4px) scale(0.985); }
+    to { opacity: 1; transform: none; }
+  }
+  @keyframes slide-in-right {
+    from { transform: translateX(24px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+  @keyframes slide-up {
+    from { transform: translateY(8px); opacity: 0; }
+    to { transform: none; opacity: 1; }
+  }
+}
+
+/* Dark theme: set by data-theme="dark" on <html> (see utils/theme.ts). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --color-scrim: #0c0c0e;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-canvas: #141413;
+  --color-surface: #1c1c1a;
+  --color-subtle: #232321;
+  --color-muted: #2d2c29;
+  --color-line: #2f2e2b;
+  --color-line-strong: #43423d;
+
+  --color-ink: #ededea;
+  --color-ink-2: #c6c5bf;
+  --color-ink-3: #9a9992;
+  --color-ink-4: #6d6c66;
+
+  --color-nav: #0f0f0e;
+  --color-nav-raised: #1b1b19;
+
+  --color-accent: #dd5b21;
+  --color-accent-hover: #e8743f;
+  --color-accent-soft: #3a1f12;
+  --color-accent-line: #6b3417;
+  --color-accent-ink: #f5a27a;
+
+  --color-success: #3bb8a1;
+  --color-success-soft: #11302b;
+  --color-success-line: #1f4f46;
+  --color-warning: #d9a640;
+  --color-warning-soft: #33280f;
+  --color-warning-line: #5c4718;
+  --color-danger: #f0695c;
+  --color-danger-hover: #f48a80;
+  --color-danger-soft: #3a1714;
+  --color-danger-line: #6b2620;
+  --color-info: #74a2f6;
+  --color-info-soft: #142240;
+  --color-info-line: #23396b;
+  --color-teal: #3bb8a1;
+
+  --color-status-new: #6d695f;
+  --color-status-contacted: #948e80;
+  --color-status-interested: #e8894e;
+  --color-status-followup: #dd5b21;
+  --color-status-converted: #3bb8a1;
+  --color-status-lost: #45433e;
+
+  --color-series-sent: #7a766c;
+  --color-series-delivered: #3bb8a1;
+  --color-series-opened: #dd5b21;
+  --color-series-clicked: #d9a640;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-float: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 20px -6px rgba(0, 0, 0, 0.5);
+  --shadow-overlay: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 24px -4px rgba(0, 0, 0, 0.55);
+  --shadow-dialog: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 24px 48px -12px rgba(0, 0, 0, 0.7);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    /* Prevents layout shift when dialogs lock body scroll. */
+    scrollbar-gutter: stable;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: var(--color-accent-soft);
+    color: var(--color-accent-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label[for],
+  summary {
+    cursor: pointer;
+  }
+
+  input[type="checkbox"] {
+    accent-color: var(--color-accent);
+  }
+}
+
+@layer utilities {
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line-strong) transparent;
+  }
+}
+
+/* ---------- Email content (editor + previews) ---------- */
+.mailflow-editor-content,
+.mailflow-preview-body {
+  line-height: 1.65;
+  color: var(--color-ink);
+  overflow-wrap: anywhere;
+}
+
+.mailflow-editor-content {
+  outline: none;
+}
+
+.mailflow-editor-content p,
+.mailflow-preview-body p {
+  margin-bottom: 0.8em;
+}
+
+.mailflow-editor-content p:last-child,
+.mailflow-preview-body p:last-child {
+  margin-bottom: 0;
+}
+
+.mailflow-editor-content ul,
+.mailflow-preview-body ul {
+  list-style-type: disc;
+  padding-left: 1.375rem;
+  margin-bottom: 0.8em;
+}
+
+.mailflow-editor-content ol,
+.mailflow-preview-body ol {
+  list-style-type: decimal;
+  padding-left: 1.375rem;
+  margin-bottom: 0.8em;
+}
+
+.mailflow-editor-content li,
+.mailflow-preview-body li {
+  margin-bottom: 0.25em;
+}
+
+.mailflow-editor-content a,
+.mailflow-preview-body a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Filled-in variable values; highlighted only when the preview asks for it. */
+.mf-highlight .mf-var-filled {
+  background-color: var(--color-accent-soft);
+  color: var(--color-accent-ink);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.missing-var-highlight {
+  display: inline-block;
+  background-color: var(--color-warning-soft);
+  color: #92400e;
+  box-shadow: inset 0 -1.5px 0 #e3a008;
+  border-radius: 3px;
+  padding: 0 4px;
+  font-family: var(--font-mono);
+  font-size: 0.82em;
+  font-weight: 500;
+}
+
+/* Page change: a short fade and lift so switching pages doesn't feel like a jump cut. */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.page-enter {
+  animation: page-enter 160ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+/* Loading placeholder shimmer. */
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+.skeleton {
+  background-color: var(--color-subtle);
+  border-radius: 6px;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
