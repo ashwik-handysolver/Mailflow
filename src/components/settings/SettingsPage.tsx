@@ -57,7 +57,7 @@ export function SettingsPage() {
       <div className="lg:grid lg:grid-cols-[180px_minmax(0,760px)] lg:gap-10">
       <SettingsNav />
       <div className="min-w-0">
-      <form onSubmit={submit} noValidate className="space-y-6">
+      <form onSubmit={submit} noValidate className="space-y-16">
         <Section id="profile" title="Profile">
           <div className="mb-6 flex items-center gap-4">
             <div className="relative w-fit shrink-0">
@@ -157,7 +157,7 @@ export function SettingsPage() {
         </Section>
 
         <Section id="defaults" title="Sending defaults">
-          <div className="divide-y divide-line rounded-lg border border-line">
+          <div className="divide-y divide-line/70">
             <Row>
               <Switch
                 checked={draft.includeSignatureByDefault}
@@ -229,7 +229,7 @@ export function SettingsPage() {
       </form>
 
       {/* Outside the settings form: mailbox changes apply immediately and have their own forms. */}
-      <div className="mt-6 space-y-6 pb-20">
+      <div className="mt-16 space-y-16 pb-20">
         <Section id="mailboxes" title="Sending mailboxes">
           <div className="mb-4 flex items-center gap-2">
             <Badge tone={emailProvider.isSimulated ? 'info' : 'success'} dot>
@@ -267,9 +267,9 @@ const SECTIONS = [
 
 function Section({ id, title, description, children }: { id: string; title: string; description?: string; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-6 rounded-xl border border-line bg-surface p-5 sm:p-6">
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-8">
       <div className="mb-5">
-        <h2 id={`${id}-title`} className="text-heading font-semibold text-ink">
+        <h2 id={`${id}-title`} className="text-lg font-semibold leading-7 tracking-[-0.015em] text-ink">
           {title}
         </h2>
         {description && <p className="mt-0.5 text-ui text-ink-3">{description}</p>}
@@ -289,7 +289,7 @@ const THEME_OPTIONS: { value: ThemePreference; label: string; icon: ReactNode }[
 function AppearanceSetting() {
   const [theme, setTheme] = useTheme();
   return (
-    <div role="radiogroup" aria-label="Theme" className="inline-flex rounded-lg border border-line bg-subtle p-0.5">
+    <div role="radiogroup" aria-label="Theme" className="inline-flex gap-1">
       {THEME_OPTIONS.map((o) => {
         const active = theme === o.value;
         return (
@@ -301,7 +301,7 @@ function AppearanceSetting() {
             onClick={() => setTheme(o.value)}
             className={cn(
               'inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-ui font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent [&_svg]:size-3.5',
-              active ? 'bg-surface text-ink shadow-xs' : 'text-ink-3 hover:text-ink'
+              active ? 'bg-subtle text-ink' : 'text-ink-3 hover:text-ink'
             )}
           >
             {o.icon}
@@ -339,10 +339,9 @@ function SettingsNav() {
               aria-current={active === s.id ? 'true' : undefined}
               className={cn(
                 'relative flex h-8 w-full items-center rounded-md px-3 text-left text-ui transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
-                active === s.id ? 'bg-surface font-medium text-ink shadow-xs' : 'text-ink-3 hover:bg-subtle hover:text-ink'
+                active === s.id ? 'font-medium text-ink' : 'text-ink-3 hover:text-ink'
               )}
             >
-              {active === s.id && <span className="absolute left-0 top-2 h-4 w-0.5 rounded-r bg-accent" aria-hidden="true" />}
               {s.label}
             </button>
           </li>

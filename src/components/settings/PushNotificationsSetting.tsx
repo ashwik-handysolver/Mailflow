@@ -56,7 +56,7 @@ export function PushNotificationsSetting() {
 
   const current = state ?? 'off';
   return (
-    <div className="divide-y divide-line rounded-lg border border-line">
+    <div className="divide-y divide-line/70">
       <div className="flex items-center justify-between gap-4 px-4 py-3.5">
         <Switch
           checked={current === 'on'}

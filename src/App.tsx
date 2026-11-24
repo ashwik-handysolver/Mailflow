@@ -77,7 +77,7 @@ function Shell() {
 
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Mobile top bar */}
-        <div className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-line bg-canvas px-3 lg:hidden">
+        <div className="sticky top-0 z-30 flex h-14 items-center justify-between gap-3 bg-canvas/90 px-3 backdrop-blur lg:hidden">
           <div className="flex items-center gap-1.5">
             <IconButton label="Open navigation" onClick={() => setMobileOpen(true)}>
               <MenuIcon />
@@ -93,8 +93,8 @@ function Shell() {
           </IconButton>
         </div>
 
-        {/* Flat header with a hairline divider; on desktop the content below scrolls on its own. */}
-        <header className="sticky top-14 z-20 flex items-center border-b border-line bg-canvas pr-3 sm:pr-4 lg:static lg:pr-4">
+        {/* Header sits on the page itself; on desktop the content below scrolls on its own. */}
+        <header className="sticky top-14 z-20 flex items-center bg-canvas pr-3 sm:pr-4 lg:static lg:pr-6">
           {/* Page title and actions are portalled in here by <PageHeader>. */}
           <div ref={setHeaderSlot} className="min-w-0 flex-1" />
           <AccountControls />

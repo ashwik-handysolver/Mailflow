@@ -33,7 +33,8 @@ export function InfoTip({ children, align = 'start', className }: { children: Re
         className={cn(
           'pointer-events-none absolute top-full z-40 mt-1.5 w-60 rounded-md bg-ink px-2.5 py-2 text-left text-xs font-normal leading-relaxed text-canvas shadow-overlay transition-opacity duration-100',
           align === 'end' ? 'right-0' : 'left-0',
-          open ? 'opacity-100' : 'opacity-0'
+          // Closed tips are removed from layout so they never widen the page (still read via aria-describedby).
+          open ? 'opacity-100' : 'hidden'
         )}
       >
         {children}

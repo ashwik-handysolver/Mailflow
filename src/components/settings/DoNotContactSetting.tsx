@@ -108,7 +108,7 @@ export function DoNotContactSetting() {
       ) : items.length === 0 ? (
         <p className="text-ui text-ink-3">Nobody has opted out yet.</p>
       ) : (
-        <ul className="max-h-72 divide-y divide-line overflow-y-auto rounded-lg border border-line">
+        <ul className="max-h-72 divide-y divide-line/70 overflow-y-auto">
           {items.map((s) => (
             <li key={s.email} className="flex items-center gap-3 px-4 py-2.5">
               <span className="min-w-0 flex-1 truncate text-ui text-ink">{s.email}</span>

@@ -42,10 +42,10 @@ export function EmailPreview({
   const { settings } = useWorkspace();
   const styled = emailStyle !== 'plain';
   return (
-    <div className={cn('rounded-lg bg-muted/60', className)}>
-      {toolbar && <div className="border-b border-line/80 px-4 py-2">{toolbar}</div>}
+    <div className={cn(className)}>
+      {toolbar && <div className="pb-3">{toolbar}</div>}
       <div className="p-3 sm:p-5">
-        <article className={cn('mx-auto w-full max-w-[600px] rounded-md border border-line bg-surface', highlight && 'mf-highlight')}>
+        <article className={cn('mx-auto w-full max-w-[600px] rounded-xl bg-surface shadow-[0_1px_2px_rgb(0_0_0/0.04),0_12px_32px_-16px_rgb(0_0_0/0.18),0_0_0_1px_rgb(0_0_0/0.04)] dark:shadow-[0_0_0_1px_var(--color-line)]', highlight && 'mf-highlight')}>
           <header className="border-b border-line px-5 py-4">
             <h3
               className="text-[15px] font-semibold leading-snug text-ink break-words"

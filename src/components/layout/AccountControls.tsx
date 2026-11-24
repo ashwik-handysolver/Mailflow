@@ -1,4 +1,4 @@
-import { LogOut, Settings, UserRound } from 'lucide-react';
+import { LogOut, Settings } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useNavigation, useWorkspace } from '../../app/WorkspaceContext';
 import { cn } from '../../lib/cn';
@@ -33,7 +33,6 @@ export function AccountControls({ className }: { className?: string }) {
           </div>
         }
         items={[
-          { label: 'Profile and sender', icon: <UserRound />, onSelect: () => navigate('settings') },
           { label: 'Settings', icon: <Settings />, onSelect: () => navigate('settings') },
           ...(supabase
             ? [{ label: 'Sign out', icon: <LogOut />, separated: true, onSelect: () => void supabase!.auth.signOut() }]

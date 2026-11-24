@@ -100,17 +100,17 @@ export function ActivityFeed({ activities, onOpenCampaign, onOpenLead, full = fa
       {groups.length === 0 ? (
         <EmptyState compact title="No activity yet" />
       ) : (
-        <div className="rounded-xl border border-line bg-surface [&>div:first-child>h3]:rounded-t-xl">
+        <div>
           {groups.map((g) => (
             <div key={g.label}>
               {/* Day label stays visible while its events scroll past. */}
-              <h3 className="sticky top-0 z-10 border-b border-line bg-[color-mix(in_srgb,var(--color-subtle)_70%,var(--color-surface))] px-4 py-1.5 text-2xs font-medium uppercase tracking-[0.06em] text-ink-3">
+              <h3 className="sticky top-0 z-10 bg-canvas pb-2 pt-6 text-xs font-medium text-ink-3">
                 {g.label}
               </h3>
-              <ul className="divide-y divide-line">
+              <ul>
                 {g.items.map((item) => (
-                  <li key={item.id} className="flex items-start gap-3 px-4 py-2.5">
-                    <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-subtle text-ink-3 [&_svg]:size-3.5">
+                  <li key={item.id} className="flex items-start gap-3 py-2.5">
+                    <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center text-ink-4 [&_svg]:size-3.5">
                       {TYPE_ICON[item.type]}
                     </span>
                     <span className="min-w-0 flex-1">

@@ -1,14 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { loadWorkspace, saveChanges } from './cloudSync';
-import {
-  buildInitialDailyMetrics,
-  DEFAULT_SETTINGS,
-  INITIAL_ACTIVITIES,
-  INITIAL_CAMPAIGNS,
-  INITIAL_LEADS,
-  INITIAL_TEMPLATES,
-} from '../data/mockData';
+import { DEFAULT_SETTINGS, isDemoId, LEGACY_DEMO_SENDER } from '../data/defaults';
 import {
   ActivityLogItem,
   Campaign,
@@ -21,7 +14,6 @@ import {
   ToastMessage,
 } from '../types/outreach';
 import { toLocalIsoDate } from '../utils/analytics';
-import { clearFiles } from '../utils/attachmentStore';
 import type { DeliveryEvent } from '../utils/deliveryEvents';
 
 const STORAGE_KEY = 'mailflow_workspace_state_v1';
@@ -105,14 +97,26 @@ function accountSettings(settings: TeamSettings, email: string, fullName?: strin
   };
 }
 
+/** A new workspace starts empty. */
 function getDefaultState(): PersistedWorkspaceState {
+  return { leads: [], templates: [], campaigns: [], activities: [], dailyMetrics: [], settings: DEFAULT_SETTINGS };
+}
+
+/** Drops leftover demo content from a cache written by an older version of the app. */
+function withoutDemo(state: PersistedWorkspaceState): PersistedWorkspaceState {
+  const hadDemo = state.campaigns.some((c) => isDemoId(c.id)) || state.leads.some((l) => isDemoId(l.id));
   return {
-    leads: INITIAL_LEADS,
-    templates: INITIAL_TEMPLATES,
-    campaigns: INITIAL_CAMPAIGNS,
-    activities: INITIAL_ACTIVITIES,
-    dailyMetrics: buildInitialDailyMetrics(),
-    settings: DEFAULT_SETTINGS,
+    leads: state.leads.filter((l) => !isDemoId(l.id)),
+    // Templates may have been edited and used for real sends; only drop untouched demo copies.
+    templates: state.templates.filter((t) => !isDemoId(t.id) || !hadDemo),
+    campaigns: state.campaigns.filter((c) => !isDemoId(c.id)),
+    activities: state.activities.filter((a) => !isDemoId(a.id)),
+    // The demo's 90-day chart history was made up.
+    dailyMetrics: hadDemo ? [] : state.dailyMetrics,
+    settings:
+      state.settings.senderEmail === LEGACY_DEMO_SENDER
+        ? { ...state.settings, userName: '', userRole: '', teamName: '', senderDisplayName: '', senderEmail: '', defaultSignatureHtml: '' }
+        : state.settings,
   };
 }
 
@@ -123,20 +127,15 @@ function loadStateFromStorage(): PersistedWorkspaceState {
     if (!raw) return getDefaultState();
     const parsed = JSON.parse(raw) as Partial<PersistedWorkspaceState>;
     const defaults = getDefaultState();
-    return {
-      leads: Array.isArray(parsed.leads) && parsed.leads.length > 0 ? parsed.leads : defaults.leads,
-      templates:
-        Array.isArray(parsed.templates) && parsed.templates.length > 0
-          ? parsed.templates
-          : defaults.templates,
+    // Empty lists stay empty: deleting everything must not bring anything back.
+    return withoutDemo({
+      leads: Array.isArray(parsed.leads) ? parsed.leads : defaults.leads,
+      templates: Array.isArray(parsed.templates) ? parsed.templates : defaults.templates,
       campaigns: Array.isArray(parsed.campaigns) ? parsed.campaigns : defaults.campaigns,
       activities: Array.isArray(parsed.activities) ? parsed.activities : defaults.activities,
-      dailyMetrics:
-        Array.isArray(parsed.dailyMetrics) && parsed.dailyMetrics.length > 0
-          ? parsed.dailyMetrics
-          : defaults.dailyMetrics,
+      dailyMetrics: Array.isArray(parsed.dailyMetrics) ? parsed.dailyMetrics : defaults.dailyMetrics,
       settings: parsed.settings ? { ...defaults.settings, ...parsed.settings } : defaults.settings,
-    };
+    });
   } catch {
     return getDefaultState();
   }
@@ -158,7 +157,7 @@ export function useOutreachStore(db: SupabaseClient | null = null) {
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  // Load from the cloud once. A brand-new account is seeded with this browser's data.
+  // Load from the cloud once. A brand-new account starts with an empty workspace.
   useEffect(() => {
     if (!db) return;
     let cancelled = false;
@@ -170,7 +169,8 @@ export function useOutreachStore(db: SupabaseClient | null = null) {
         if (remote) {
           current = remote;
         } else {
-          current = stateRef.current;
+          // Never copy another account's cached data (or old demo content) into a new account.
+          current = getDefaultState();
           await saveChanges(db, null, current);
           if (cancelled) return;
         }
@@ -178,7 +178,7 @@ export function useOutreachStore(db: SupabaseClient | null = null) {
         // Replace the demo profile with the signed-in account; the save effect writes it back.
         const email = auth.user?.email;
         const next =
-          email && current.settings.senderEmail === DEFAULT_SETTINGS.senderEmail
+          email && (!current.settings.senderEmail || current.settings.senderEmail === LEGACY_DEMO_SENDER)
             ? { ...current, settings: accountSettings(current.settings, email, auth.user?.user_metadata?.full_name) }
             : current;
         setState(next);
@@ -752,23 +752,6 @@ export function useOutreachStore(db: SupabaseClient | null = null) {
     [addToast]
   );
 
-  const resetDemoData = useCallback(() => {
-    // Template files live in IndexedDB; the demo data has none, so drop them all.
-    void clearFiles().catch(() => undefined);
-    const fresh = getDefaultState();
-    setState(fresh);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
-    } catch {
-      // ignore
-    }
-    addToast({
-      type: 'info',
-      title: 'Workspace reset',
-      description: 'Restored default leads, templates, and campaign history.',
-    });
-  }, [addToast]);
-
   const getLeadEmailHistory = useCallback(
     (leadId: string): EmailActivityRecord[] => {
       const records: EmailActivityRecord[] = [];
@@ -810,7 +793,6 @@ export function useOutreachStore(db: SupabaseClient | null = null) {
     recordSimulatedCampaign,
     applyDeliveryEvents,
     updateSettings,
-    resetDemoData,
     getLeadEmailHistory,
   };
 }

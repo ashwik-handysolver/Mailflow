@@ -121,7 +121,7 @@ export function SegmentedControl<T extends string | number>({
     <div
       role="radiogroup"
       aria-label={ariaLabel}
-      className="inline-flex items-center rounded-md bg-muted p-0.5 shrink-0"
+      className="inline-flex items-center gap-0.5 shrink-0"
     >
       {options.map((opt) => {
         const active = opt.value === value;
@@ -135,7 +135,7 @@ export function SegmentedControl<T extends string | number>({
             className={cn(
               'inline-flex items-center gap-1.5 whitespace-nowrap rounded-[5px] font-medium transition-colors duration-100',
               size === 'sm' ? 'h-6 px-2 text-xs' : 'h-7 px-2.5 text-ui',
-              active ? 'bg-surface text-ink shadow-xs' : 'text-ink-3 hover:text-ink'
+              active ? 'bg-subtle text-ink' : 'text-ink-3 hover:text-ink'
             )}
           >
             {opt.label}
@@ -153,15 +153,7 @@ export function SegmentedControl<T extends string | number>({
 
 /* ---------------- Avatar ---------------- */
 
-/** Warm, low-saturation tones that sit with the ember brand. */
-const AVATAR_TONES = [
-  'bg-[#F6E7DC] text-[#8A3B12] dark:bg-[#3a2418] dark:text-[#f2b48f]',
-  'bg-[#E3EFEC] text-[#155E52] dark:bg-[#15302b] dark:text-[#8fd4c4]',
-  'bg-[#EFE9DD] text-[#6B5321] dark:bg-[#30291a] dark:text-[#dcc38c]',
-  'bg-[#ECE8E3] text-[#4A4540] dark:bg-[#2c2a27] dark:text-[#cfc9c1]',
-  'bg-[#E6ECEF] text-[#2F4A57] dark:bg-[#1c2a31] dark:text-[#a6c3d1]',
-  'bg-[#F1E6E6] text-[#7A3535] dark:bg-[#351c1c] dark:text-[#e0a3a3]',
-];
+const AVATAR_TONES = ['bg-muted text-ink-2'];
 
 export function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);

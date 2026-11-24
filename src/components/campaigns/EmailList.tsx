@@ -52,9 +52,9 @@ export interface EmailListActions {
 export function EmailList({ rows, showCampaign = false, ...actions }: { rows: EmailLogRow[]; showCampaign?: boolean } & EmailListActions) {
   const [openId, setOpenId] = useState<string | null>(null);
   return (
-    <div className="overflow-hidden rounded-xl border border-line bg-surface">
+    <div>
       <div
-        className="hidden border-b border-line bg-[color-mix(in_srgb,var(--color-subtle)_70%,var(--color-surface))] px-4 py-2 text-2xs font-medium uppercase tracking-[0.06em] text-ink-3 md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_120px_130px_16px] md:gap-4"
+        className="hidden border-b border-line py-2 text-xs text-ink-3 md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_120px_130px_16px] md:gap-4"
         aria-hidden="true"
       >
         <span>Recipient</span>
@@ -63,7 +63,7 @@ export function EmailList({ rows, showCampaign = false, ...actions }: { rows: Em
         <span>Sent</span>
         <span />
       </div>
-      <ul className="divide-y divide-line">
+      <ul className="divide-y divide-line/70">
         {rows.map((row) => (
           <EmailItem key={row.id} row={row} open={openId === row.id} onToggle={() => setOpenId(openId === row.id ? null : row.id)} showCampaign={showCampaign} {...actions} />
         ))}
@@ -92,12 +92,12 @@ function EmailItem({
   const mailbox = mailboxName?.(row.mailboxId);
 
   return (
-    <li className={cn(open && 'bg-subtle/40')}>
+    <li>
       <button
         type="button"
         aria-expanded={open}
         onClick={onToggle}
-        className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-1 px-4 py-3 text-left transition-colors hover:bg-subtle/60 focus-visible:bg-subtle focus-visible:outline-none md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_120px_130px_16px] md:items-center"
+        className="grid w-full grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 gap-y-1 py-3.5 text-left transition-colors hover:bg-subtle/50 focus-visible:bg-subtle focus-visible:outline-none md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_120px_130px_16px] md:items-center"
       >
         <span className="min-w-0">
           <span className="block truncate text-ui font-medium text-ink">{row.leadName || row.leadEmail}</span>
@@ -125,7 +125,7 @@ function EmailItem({
       </button>
 
       {open && (
-        <div className="space-y-3 border-t border-line px-4 pb-4 pt-3">
+        <div className="space-y-4 pb-6 pt-1">
           {problem && (
             <div className={cn('rounded-md px-3 py-2 text-ui', row.state === 'failed' ? 'bg-danger-soft text-danger' : 'bg-warning-soft text-warning')}>
               <p className="font-medium">{reason}</p>
@@ -170,7 +170,7 @@ function EmailItem({
             </dd>
           </dl>
 
-          <div className="mailflow-preview-body max-h-72 overflow-y-auto rounded-md border border-line bg-surface p-3 text-ui scrollbar-thin" dangerouslySetInnerHTML={{ __html: row.bodyHtml }} />
+          <div className="mailflow-preview-body max-h-72 overflow-y-auto rounded-lg bg-subtle/60 p-4 text-ui scrollbar-thin" dangerouslySetInnerHTML={{ __html: row.bodyHtml }} />
           {row.attachments && row.attachments.length > 0 && <AttachmentList items={row.attachments} />}
 
           <div className="flex flex-wrap items-center gap-2">

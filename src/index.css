@@ -11,14 +11,14 @@
   --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Surfaces: warm neutral workspace, white working surfaces */
-  --color-canvas: #f5f4f0;
+  --color-canvas: #fbfaf8;
   --color-surface: #ffffff;
-  --color-subtle: #f3f2ee;
-  --color-muted: #eae8e2;
+  --color-subtle: #f3f1ed;
+  --color-muted: #ebe8e2;
 
   /* Lines */
-  --color-line: #e5e3dc;
-  --color-line-strong: #d4d1c8;
+  --color-line: #ecE9e3;
+  --color-line-strong: #d9d5cc;
 
   /* Text: deep charcoal, hierarchy through weight and tone */
   --color-ink: #19191d;
@@ -26,12 +26,12 @@
   --color-ink-3: #6a6a72;
   --color-ink-4: #a09fa5;
 
-  /* Navigation (dark sidebar) */
-  --color-nav: #17171b;
-  --color-nav-raised: #222227;
-  --color-nav-ink: #ededf0;
-  --color-nav-ink-2: #a3a3ad;
-  --color-nav-ink-3: #6e6e78;
+  /* Navigation: a slightly deeper tone of the page, no slab, no border */
+  --color-nav: #f4f2ee;
+  --color-nav-raised: #e9e6e0;
+  --color-nav-ink: #1c1b19;
+  --color-nav-ink-2: #57554f;
+  --color-nav-ink-3: #94918a;
 
   /* Accent: ember, drawn from the logo; one brand colour across sign-in and app */
   --color-accent: #c2410c;
@@ -41,10 +41,10 @@
   --color-accent-ink: #9a3412;
 
   /* Status */
-  /* Muted teal for successful activity */
-  --color-success: #0e7c6b;
-  --color-success-soft: #e9f5f2;
-  --color-success-line: #b5ddd3;
+  /* Emerald for good outcomes (delivered, opened, healthy) */
+  --color-success: #047857;
+  --color-success-soft: #ecfdf5;
+  --color-success-line: #a7f3d0;
   --color-warning: #a16207;
   --color-warning-soft: #fef9e7;
   --color-warning-line: #f3de9a;
@@ -68,7 +68,7 @@
 
   /* Chart series */
   --color-series-sent: #a8a397;
-  --color-series-delivered: #0e7c6b;
+  --color-series-delivered: #3b3a36;
   --color-series-opened: #c2410c;
   --color-series-clicked: #d97706;
 
@@ -145,16 +145,19 @@
   --color-surface: #1c1c1a;
   --color-subtle: #232321;
   --color-muted: #2d2c29;
-  --color-line: #2f2e2b;
-  --color-line-strong: #43423d;
+  --color-line: #262624;
+  --color-line-strong: #3a3935;
 
   --color-ink: #ededea;
   --color-ink-2: #c6c5bf;
   --color-ink-3: #9a9992;
   --color-ink-4: #6d6c66;
 
-  --color-nav: #0f0f0e;
-  --color-nav-raised: #1b1b19;
+  --color-nav: #111110;
+  --color-nav-raised: #22221f;
+  --color-nav-ink: #ededea;
+  --color-nav-ink-2: #a9a8a2;
+  --color-nav-ink-3: #6d6c66;
 
   --color-accent: #dd5b21;
   --color-accent-hover: #e8743f;
@@ -162,9 +165,9 @@
   --color-accent-line: #6b3417;
   --color-accent-ink: #f5a27a;
 
-  --color-success: #3bb8a1;
-  --color-success-soft: #11302b;
-  --color-success-line: #1f4f46;
+  --color-success: #34d399;
+  --color-success-soft: #0c2b21;
+  --color-success-line: #1d5442;
   --color-warning: #d9a640;
   --color-warning-soft: #33280f;
   --color-warning-line: #5c4718;
@@ -185,7 +188,7 @@
   --color-status-lost: #45433e;
 
   --color-series-sent: #7a766c;
-  --color-series-delivered: #3bb8a1;
+  --color-series-delivered: #cfccc5;
   --color-series-opened: #dd5b21;
   --color-series-clicked: #d9a640;
 

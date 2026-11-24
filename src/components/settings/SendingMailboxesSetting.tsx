@@ -57,7 +57,7 @@ export function SendingMailboxesSetting() {
     <div className="space-y-3">
       {error && <p className="text-ui text-danger">{error}</p>}
       {mailboxes.length > 0 && (
-        <ul className="divide-y divide-line rounded-lg border border-line">
+        <ul className="divide-y divide-line/70">
           {mailboxes.map((m) => (
             <MailboxRow key={m.id} mailbox={m} onChanged={refresh} />
           ))}
@@ -297,7 +297,7 @@ function AddMailboxForm({ onCancel, onAdded }: { onCancel: () => void; onAdded: 
   };
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-4 rounded-lg border border-line p-4">
+    <form onSubmit={submit} noValidate className="space-y-4 rounded-xl bg-subtle/60 p-5">
       <div>
         <p className="text-sm font-medium text-ink">Connect a Gmail or Google Workspace mailbox</p>
         <p className="mt-0.5 text-ui text-ink-3">

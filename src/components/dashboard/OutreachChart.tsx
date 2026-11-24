@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   Bar,
   CartesianGrid,
   ComposedChart,
   Line,
+  Rectangle,
   ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
@@ -13,7 +14,6 @@ import {
   YAxis,
 } from 'recharts';
 import type { NameType, ValueType } from 'recharts/types/component/DefaultTooltipContent';
-import { cn } from '../../lib/cn';
 import { DayPoint, pct } from '../../utils/outreachAnalytics';
 
 export type ChartMode = 'volume' | 'engagement' | 'deliverability';
@@ -44,6 +44,27 @@ const SERIES: Record<ChartMode, Series[]> = {
   deliverability: [{ key: 'bounceRate', label: 'Hard-bounce rate', color: 'var(--color-danger)', kind: 'line', axis: 'rate' }],
 };
 
+/** Legend for the stacked volume bars, in stacking order. */
+export const VOLUME_LEGEND = SERIES.volume.map(({ key, label, color }) => ({ key, label, color }));
+
+const STACK_ORDER = SERIES.volume.map((s) => s.key);
+
+interface SegmentProps {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  fill?: string;
+  payload?: Record<string, unknown>;
+}
+
+/** Only the topmost non-empty segment of each stack gets rounded top corners. */
+function StackSegment({ seriesKey, payload, x, y, width, height, fill }: SegmentProps & { seriesKey: string }) {
+  if (!height) return <g />;
+  const top = [...STACK_ORDER].reverse().find((k) => Number(payload?.[k] ?? 0) > 0);
+  return <Rectangle x={x} y={y} width={width} height={height} fill={fill} radius={top === seriesKey ? [4, 4, 0, 0] : 0} />;
+}
+
 const SUM_KEYS = ['attempted', 'sent', 'delivered', 'failed', 'hardBounces', 'softBounces', 'openEligible', 'uniqueOpens', 'totalOpens'] as const;
 const fmt = (iso: string, opts: Intl.DateTimeFormatOptions) => new Date(`${iso}T12:00:00`).toLocaleDateString('en-US', opts);
 
@@ -72,10 +93,8 @@ function group(points: DayPoint[]): { points: Grouped[]; weekly: boolean } {
  * from the legend. Rates are only plotted for periods that have a denominator.
  */
 export function OutreachChart({ points, mode, summary }: { points: DayPoint[]; mode: ChartMode; summary: string }) {
-  const [hidden, setHidden] = useState<Set<string>>(new Set());
   const { points: data, weekly } = useMemo(() => group(points), [points]);
-  const series = SERIES[mode];
-  const drawn = series.filter((s) => !hidden.has(s.key));
+  const drawn = SERIES[mode];
   const hasRate = drawn.some((s) => s.axis === 'rate');
   const hasCount = drawn.some((s) => s.axis === 'count');
   const tickOpts: Intl.DateTimeFormatOptions =
@@ -83,53 +102,16 @@ export function OutreachChart({ points, mode, summary }: { points: DayPoint[]; m
   const maxBounce = Math.max(0, ...data.map((p) => p.bounceRate ?? 0));
   const rateMax = mode === 'deliverability' ? Math.max(10, Math.ceil((maxBounce + 2) / 5) * 5) : 100;
 
-  const toggle = (key: string) =>
-    setHidden((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else if (series.filter((s) => !next.has(s.key)).length > 1) next.add(key);
-      return next;
-    });
-
   return (
     <figure className="m-0 flex h-full flex-col">
-      <figcaption className="sr-only">{summary}</figcaption>
-      <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Show or hide series">
-        {series.map((s) => {
-          const off = hidden.has(s.key);
-          return (
-            <button
-              key={s.key}
-              type="button"
-              aria-pressed={!off}
-              onClick={() => toggle(s.key)}
-              className={cn(
-                'inline-flex h-7 items-center gap-1.5 rounded-md px-2 text-xs transition-colors hover:bg-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent',
-                off ? 'text-ink-4' : 'text-ink-2'
-              )}
-            >
-              <span
-                className={cn(s.kind === 'bar' ? 'size-2 rounded-[2px]' : 'h-0.5 w-3 rounded-full', off && 'opacity-30')}
-                style={{ background: s.color }}
-                aria-hidden="true"
-              />
-              {s.label}
-            </button>
-          );
-        })}
-        {mode === 'deliverability' && (
-          <span className="ml-1 inline-flex items-center gap-1.5 text-xs text-ink-3">
-            <span className="h-px w-3 border-t border-dashed border-danger" aria-hidden="true" />
-            {BOUNCE_LIMIT}% limit
-          </span>
-        )}
-        {weekly && <span className="ml-auto text-xs text-ink-3">Weekly</span>}
-      </div>
-
-      <div className="mt-2 min-h-0 flex-1" aria-hidden="true">
+      <figcaption className="sr-only">
+        {summary}
+        {weekly ? ' Grouped by week.' : ''}
+      </figcaption>
+      <div className="min-h-0 flex-1" aria-hidden="true">
         <ResponsiveContainer width="100%" height="100%">
-          <ComposedChart data={data} margin={{ top: 8, right: hasRate && hasCount ? 0 : 8, bottom: 0, left: hasCount ? -16 : -6 }}>
-            <CartesianGrid vertical={false} stroke="var(--color-line)" />
+          <ComposedChart data={data} barCategoryGap="30%" margin={{ top: 8, right: hasRate && hasCount ? 0 : 8, bottom: 0, left: hasCount ? -16 : -6 }}>
+            <CartesianGrid vertical={false} stroke="var(--color-line-strong)" strokeOpacity={0.55} strokeDasharray="3 4" />
             <XAxis
               dataKey="date"
               tickFormatter={(v: string) => fmt(v, tickOpts)}
@@ -177,7 +159,11 @@ export function OutreachChart({ points, mode, summary }: { points: DayPoint[]; m
                   name={s.label}
                   fill={s.color}
                   stackId={mode === 'volume' ? 'v' : undefined}
-                  maxBarSize={22}
+                  maxBarSize={18}
+                  shape={
+                    mode === 'volume' ? (props: unknown) => <StackSegment {...(props as SegmentProps)} seriesKey={s.key} /> : undefined
+                  }
+                  radius={mode === 'volume' ? undefined : [4, 4, 0, 0]}
                   isAnimationActive={false}
                 />
               ) : (

@@ -267,7 +267,7 @@ export function LeadsPage() {
         </div>
       )}
 
-      <div className="rounded-xl border border-line bg-surface">
+      <div>
         {leads.length === 0 ? (
           <EmptyState
             title="No leads yet"
@@ -291,7 +291,7 @@ export function LeadsPage() {
           <div className="relative scrollbar-thin max-lg:overflow-x-auto">
             <table className="w-full text-ui">
               <thead>
-                <tr className="text-left text-2xs font-medium uppercase tracking-[0.06em] text-ink-3 whitespace-nowrap [&>th]:sticky [&>th]:top-0 [&>th]:z-10 [&>th]:border-b [&>th]:border-line [&>th]:bg-[color-mix(in_srgb,var(--color-subtle)_70%,var(--color-surface))] [&>th:first-child]:rounded-tl-xl [&>th:last-child]:rounded-tr-xl">
+                <tr className="text-left text-xs font-normal text-ink-3 whitespace-nowrap [&>th]:sticky [&>th]:top-0 [&>th]:z-10 [&>th]:border-b [&>th]:border-line [&>th]:bg-canvas">
                   <th scope="col" className="w-10 pl-4 pr-1 py-2">
                     <Checkbox
                       aria-label={allVisibleSelected ? 'Deselect leads on this page' : 'Select leads on this page'}
@@ -440,7 +440,7 @@ export function LeadsPage() {
           </div>
         )}
         {filtered.length > 0 && (
-          <div className="border-t border-line px-4 py-2">
+          <div className="pt-3">
             <Pagination
               page={safePage}
               totalPages={totalPages}
@@ -499,7 +499,7 @@ function SortButton({ label, state, onClick }: { label: string; state: 'asc' | '
     <button
       type="button"
       onClick={onClick}
-      className={cn('-mx-1 inline-flex items-center gap-1 rounded px-1 uppercase tracking-[0.06em] hover:text-ink', state && 'text-ink')}
+      className={cn('-mx-1 inline-flex items-center gap-1 rounded px-1 hover:text-ink', state && 'text-ink')}
     >
       {label}
       <Icon className="size-3" aria-hidden="true" />
