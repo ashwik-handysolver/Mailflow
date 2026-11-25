@@ -348,6 +348,53 @@
   animation: skeleton-pulse 1.4s ease-in-out infinite;
 }
 
+/* Loading screen: envelope opens, letter rises and tucks back in. */
+.mail-loader {
+  --ml-back: var(--color-muted);
+  --ml-flap: var(--color-subtle);
+  --ml-pocket: var(--color-surface);
+  --ml-paper: var(--color-surface);
+  --ml-stroke: var(--color-line-strong);
+  --ml-line: var(--color-line-strong);
+}
+/* On the dark canvas the envelope is light paper, so it reads at a glance. */
+:root[data-theme="dark"] .mail-loader {
+  --ml-back: #bdb9b0;
+  --ml-flap: #dedad3;
+  --ml-pocket: #ece9e3;
+  --ml-paper: #fbfaf8;
+  --ml-stroke: #a9a59c;
+  --ml-line: #d5d1c9;
+}
+.mail-loader-flap,
+.mail-loader-flap-back {
+  transform-box: view-box;
+  transform-origin: 60px 37px;
+  animation: mail-flap 2.6s linear infinite;
+}
+.mail-loader-flap-back {
+  animation-name: mail-flap-back;
+}
+.mail-loader-letter {
+  animation: mail-letter 2.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+/* Front flap folds up to the top edge; the back flap continues the fold behind the letter. */
+@keyframes mail-flap {
+  0%, 6% { transform: scaleY(1); }
+  14%, 82% { transform: scaleY(0); }
+  90%, 100% { transform: scaleY(1); }
+}
+@keyframes mail-flap-back {
+  0%, 14% { transform: scaleY(0); }
+  22%, 74% { transform: scaleY(-1); }
+  82%, 100% { transform: scaleY(0); }
+}
+@keyframes mail-letter {
+  0%, 24% { transform: translateY(16px); }
+  42%, 54% { transform: translateY(-14px); }
+  72%, 100% { transform: translateY(16px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
