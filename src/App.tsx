@@ -1,5 +1,6 @@
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { AuthGate, FullScreenMessage } from './components/auth/AuthGate';
+import { MailLoader } from './components/ui/MailLoader';
 import { supabase } from './lib/supabase';
 import { applyMailboxes, listMailboxes } from './utils/mailboxes';
 import { setRealSending } from './services/emailProvider';
@@ -160,7 +161,7 @@ function SyncGate({ children }: { children: ReactNode }) {
     listMailboxes().then(applyMailboxes, () => setRealSending(null));
     return () => setRealSending(null);
   }, [syncStatus === 'local']);
-  if (syncStatus === 'loading') return <FullScreenMessage>Loading your workspace…</FullScreenMessage>;
+  if (syncStatus === 'loading') return <MailLoader label="Loading your workspace…" hideLabel />;
   if (syncStatus === 'load-error') {
     return (
       <FullScreenMessage>

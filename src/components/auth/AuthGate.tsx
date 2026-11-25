@@ -7,6 +7,7 @@ import { cn } from '../../lib/cn';
 import { Button } from '../ui/Button';
 import { Field, Input } from '../ui/Field';
 import { BrandMark, BrandPanel } from './BrandPanel';
+import { MailLoader } from '../ui/MailLoader';
 
 const MIN_NEW_PASSWORD = 8;
 
@@ -30,7 +31,7 @@ export function AuthGate({ children }: { children: (session: Session | null) => 
   }, []);
 
   if (!supabase) return <>{children(null)}</>;
-  if (session === undefined) return <FullScreenMessage>Loading…</FullScreenMessage>;
+  if (session === undefined) return <MailLoader />;
   if (recovering && session) return <AuthLayout><SetNewPassword onDone={() => setRecovering(false)} /></AuthLayout>;
   if (!session) return <AuthLayout><AuthForms /></AuthLayout>;
   return <>{children(session)}</>;
